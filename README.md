@@ -6,13 +6,16 @@
 This project's goal is to integrated YOLO object detection into my basic GUI python-based program for counting product . 
 
 ##About me
-<p style="width:25%">
+
+<p style="width:25%;">
 <img src="https://i.imgur.com/OPVmXa2.jpg">
 </p>
+
 Kasin Yamsri 
 Student NO.6010613518
 
 This is part of the final project of computer engineering at Thammsart University.
-<p style="width:50%>
+
+<p style="width:50%;">
 <img src="https://i.imgur.com/Czql5dp.png">
 </p>
