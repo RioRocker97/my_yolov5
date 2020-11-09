@@ -5,7 +5,7 @@
 # IOT-project for counting product
 This project's goal is to integrated YOLO object detection into my basic GUI python-based program for counting product . 
 
-##About me
+## About me
 
 <img src="https://i.imgur.com/OPVmXa2.jpg" width="25%">
 
@@ -14,4 +14,4 @@ Student NO.6010613518
 
 This is part of the final project of computer engineering at Thammsart University.
 
-<img src="https://i.imgur.com/Czql5dp.png" width="50%">
+<img src="https://i.imgur.com/Czql5dp.png" width="75%">
