@@ -36,7 +36,7 @@ def detect(save_img=False):
     if half:
         model.half()  # to FP16
 
-    # Second-stage classifier
+    # Second-stage classifier . This line of code won't do anything .maybe for the next development ?
     classify = False
     if classify:
         modelc = load_classifier(name='resnet101', n=2)  # initialize
@@ -69,12 +69,12 @@ def detect(save_img=False):
             img = img.unsqueeze(0)
 
         # Inference
-        t1 = time_synchronized()
+        t1 = time_synchronized() #start predictiong
         pred = model(img, augment=opt.augment)[0]
 
         # Apply NMS
         pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
-        t2 = time_synchronized()
+        t2 = time_synchronized() #end prediction . Calculate as Time frequency not FPS . Might need to do conversion
 
         # Apply Classifier
         if classify:

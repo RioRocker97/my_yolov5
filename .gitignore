@@ -248,3 +248,4 @@ fabric.properties
 /pytorch
 !gui_data/*.jpg
 !gui_data/*.png
+/myenv
