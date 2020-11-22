@@ -14,4 +14,11 @@ Student NO.6010613518
 
 This is part of the final project of computer engineering at Thammsart University.
 
+## Progression Note
+- 22/11/2020
+    - already train solid model for specific task(3 cap type + 1 unknows)
+    - Try to modify detect.py in order to work with mygui.py (kinda hard)
+    - very lazy implementation (do what minimum)
+
+
 <img src="https://i.imgur.com/Czql5dp.png" width="75%">

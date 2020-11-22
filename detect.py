@@ -113,12 +113,14 @@ def detect(opt,save_img=False):
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
 
             # Print time (inference + NMS)
-            print('%sDone. (%.3fs)' % (s, t2 - t1))
+            print('%sDone. (%.2f FPS)' % (s,1/(t2 - t1)))
 
             # Stream results
             if view_img:
-                cv2.imshow(p, im0)
+                cv2.namedWindow('YOLO', cv2.WINDOW_AUTOSIZE) #make specific window close
+                cv2.imshow('YOLO', im0)
                 if cv2.waitKey(1) == ord('q'):  # q to quit
+                    cv2.destroyWindow('YOLO') # might be useful later in tkinter
                     raise StopIteration
 
             # Save results (image with detections)
