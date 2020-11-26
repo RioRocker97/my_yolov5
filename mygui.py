@@ -6,7 +6,8 @@ import threading
 from tkinter import scrolledtext
 import cv2 
 from detect import detect as runyolo
-
+import subprocess
+import os
 # ------------------- messy Argprase from detect.py ----------------
 parser = argparse.ArgumentParser()
 parser.add_argument('--weights', nargs='+', type=str, default='mine/cap_unk.pt', help='model.pt path(s)')
@@ -16,9 +17,9 @@ parser.add_argument('--conf-thres', type=float, default=0.25, help='object confi
 parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
 parser.add_argument('--device', default='0', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
 parser.add_argument('--view-img', action='store_true', help='display results')
-parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
+parser.add_argument('--save-txt', action='store_true',default=True,help='save results to *.txt')
 parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
-parser.add_argument('--save-dir', type=str, default='inference/output', help='directory to save results')
+parser.add_argument('--save-dir', type=str, default='retrain/label', help='directory to save results')
 parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --class 0, or --class 0 2 3')
 parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
 parser.add_argument('--augment', action='store_true', help='augmented inference')
@@ -55,6 +56,7 @@ def stop_detect():
 
 def collect_data():
     print("Now Showing new image data to be trained in this model")
+    subprocess.call("explorer "+os.path.join(os.path.abspath(os.getcwd()),'retrain\\'), shell=True)
 
 def retrain():
     print("Now Re-training my model...")

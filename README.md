@@ -19,6 +19,15 @@ This is part of the final project of computer engineering at Thammsart Universit
     - already train solid model for specific task(3 cap type + 1 unknows)
     - Try to modify detect.py in order to work with mygui.py (kinda hard)
     - very lazy implementation (do what minimum)
+- 26/11/2020
+    - understanding Threading in YOLOv5
+    - try to use threading in order to save detected image to some specific location
+    - lazy implementation (do what it should)
+
+## New File Location
+
+- Base_DIR\retrain : for saving images and labels for detected image 
+
 
 
 <img src="https://i.imgur.com/Czql5dp.png" width="75%">

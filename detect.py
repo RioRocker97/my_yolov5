@@ -61,6 +61,10 @@ def detect(opt,save_img=False):
     t0 = time.time()
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
+
+    # lazy implementation
+    num=0
+    found_path=os.path.join(os.path.abspath(os.getcwd()),'retrain\\')
     for path, img, im0s, vid_cap in dataset:
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
@@ -107,6 +111,20 @@ def detect(opt,save_img=False):
                         line = (cls, conf, *xywh) if opt.save_conf else (cls, *xywh)  # label format
                         with open(txt_path + '.txt', 'a') as f:
                             f.write(('%g ' * len(line) + '\n') % line)
+                            
+                            # lazy implemetation
+                            #fname="label\\found_"+str(num)+".txt"
+                            #my_each = open(os.path.join(found_path,fname),'w')
+                            #fname.write(('%g ' * len(line)) % line)
+                            #fname.close # YOLO format for each image that found object 
+                            #print(fname+ "OK")
+                            # will come back to implement soon
+
+                            filename="found_"+str(num)+".jpg" # try to save image that has object
+                            cv2.imwrite(os.path.join(found_path,filename),im0)
+                            print(filename+" OK")
+                            num+=1
+                            # lazy implementation
 
                     if save_img or view_img:  # Add bbox to image
                         label = '%s %.2f' % (names[int(cls)], conf)
