@@ -6,6 +6,7 @@ import threading
 from tkinter import scrolledtext
 import cv2 
 from detect import detect as runyolo
+from utils.datasets import LoadWebcam
 import subprocess
 import os
 # ------------------- messy Argprase from detect.py ----------------
@@ -60,6 +61,8 @@ def collect_data():
 
 def retrain():
     print("Now Re-training my model...")
+
+def myWebcam():
 
 def my_gui():
     print("This is my GUI ")

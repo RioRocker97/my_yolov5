@@ -23,6 +23,12 @@ This is part of the final project of computer engineering at Thammsart Universit
     - understanding Threading in YOLOv5
     - try to use threading in order to save detected image to some specific location
     - lazy implementation (do what it should)
+- 27/12/2020
+    - look into detect.py again so i would modify it to be used with mygui.py
+    - new feature proposal (count,live video feed in 1 Giant GUI)
+    - exploring Machine learning and essentail library to complete this project
+    - i have no idea how to do next step 
+    
 
 ## New File Location
 
