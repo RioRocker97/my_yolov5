@@ -64,6 +64,9 @@ def detect(opt,save_img=False):
 
     # lazy implementation
     num=0
+    count=0 # my count variable
+    last_count=0 # my count variable
+    max_count=0 # my count variable
     found_path=os.path.join(os.path.abspath(os.getcwd()),'retrain\\')
     for path, img, im0s, vid_cap in dataset:
         img = torch.from_numpy(img).to(device)
@@ -95,6 +98,7 @@ def detect(opt,save_img=False):
             txt_path = str(Path(out) / Path(p).stem) + ('_%g' % dataset.frame if dataset.mode == 'video' else '')
             s += '%gx%g ' % img.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
+            max_count=0
             if det is not None and len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
@@ -103,6 +107,7 @@ def detect(opt,save_img=False):
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
+                    max_count+=n
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -121,21 +126,29 @@ def detect(opt,save_img=False):
                             # will come back to implement soon
 
                             filename="found_"+str(num)+".jpg" # try to save image that has object
-                            cv2.imwrite(os.path.join(found_path,filename),im0)
-                            print(filename+" OK")
+                            #cv2.imwrite(os.path.join(found_path,filename),im0)
+                            #print(filename+" OK")
                             num+=1
                             # lazy implementation
 
                     if save_img or view_img:  # Add bbox to image
                         label = '%s %.2f' % (names[int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
+            ### my count ###
+            if last_count <= max_count:
+                count +=(max_count - last_count)
+                last_count = max_count
+            if max_count == 0:
+                last_count = 0
 
             # Print time (inference + NMS)
             print('%sDone. (%.2f FPS)' % (s,1/(t2 - t1)))
-
+            print('Found cap : %g ' % (count))
             # Stream results
             if view_img:
                 cv2.namedWindow('YOLO', cv2.WINDOW_AUTOSIZE) #make specific window close
+                #display text in cv2 . pretty lazy implementaion if u ask me ! 
+                im0 = cv2.putText(im0,'Found cap : '+str(int(count)),(5,100),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
                 cv2.imshow('YOLO', im0)
                 if cv2.waitKey(1) == ord('q'):  # q to quit
                     cv2.destroyWindow('YOLO') # might be useful later in tkinter

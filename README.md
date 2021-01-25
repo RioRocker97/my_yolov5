@@ -1,7 +1,5 @@
 **DISCLAIMER:This repository is based to [Ultralytics/Yolov5](https://github.com/ultralytics/yolov5) . I do not own or claim to be the creator of their implemented YOLO object detection technology.**
 
-![CI CPU testing](https://github.com/ultralytics/yolov5/workflows/CI%20CPU%20testing/badge.svg)
-
 # IOT-project for counting product
 This project's goal is to integrated YOLO object detection into my basic GUI python-based program for counting product . 
 
@@ -28,7 +26,10 @@ This is part of the final project of computer engineering at Thammsart Universit
     - new feature proposal (count,live video feed in 1 Giant GUI)
     - exploring Machine learning and essentail library to complete this project
     - i have no idea how to do next step 
-    
+- 25/1/2021
+    - disable saving image after finding 'unknown' object (for performance later // will fix later)
+    - can count now (lazy implmentation)
+    - will try to squeeze all feature in GUI (still don't know what to do )    
 
 ## New File Location
 
