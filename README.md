@@ -30,7 +30,9 @@ This is part of the final project of computer engineering at Thammsart Universit
     - disable saving image after finding 'unknown' object (for performance later // will fix later)
     - can count now (lazy implmentation)
     - will try to squeeze all feature in GUI (still don't know what to do )    
-
+- 14/3/2021
+    - i filped it all !!!!! reconstuction all my work into 3 seperate unit
+    - my part is only handling client side so..... no more re-train yea !
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 

@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--weights', nargs='+', type=str, default='mine/cap_unk.pt', help='model.pt path(s)')
 parser.add_argument('--source', type=str, default='0', help='source')  # file/folder, 0 for webcam
 parser.add_argument('--img-size', type=int, default=320, help='inference size (pixels)')
-parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')
+parser.add_argument('--conf-thres', type=float, default=0.65, help='object confidence threshold')
 parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
 parser.add_argument('--device', default='cpu', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
 parser.add_argument('--view-img', action='store_true', help='display results')
@@ -67,7 +67,7 @@ def my_gui():
     print("This is my GUI ")
     frame = tkinter.Tk()
     frame.title('IOT-Project')
-    frame.geometry("1000x600")
+    frame.geometry("800x600")
     example = ImageTk.PhotoImage(Image.open("gui_data/goose.png"))
     icon = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"))
     detect_frame= tkinter.Frame(frame)
@@ -113,8 +113,8 @@ def my_gui():
     logger.error('error message')
     logger.critical('critical message')
 
-    detect_frame.place(bordermode=tkinter.INSIDE,relheight=0.8,relwidth=0.5)
-    train_frame.place(bordermode=tkinter.INSIDE,relheight=0.8,relwidth=0.5,relx=0.5)
+    detect_frame.place(bordermode=tkinter.INSIDE,relheight=0.8,relwidth=1.0)
+    #train_frame.place(bordermode=tkinter.INSIDE,relheight=0.8,relwidth=0.5,relx=0.5)
     scroll.place(bordermode=tkinter.INSIDE,relheight=0.2,relwidth=0.7,rely=0.8)
 
     frame.iconphoto(False,icon)
