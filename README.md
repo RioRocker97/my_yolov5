@@ -5,7 +5,7 @@ This project's goal is to integrated YOLO object detection into my basic GUI pyt
 
 ## About me
 
-<img src="https://i.imgur.com/OPVmXa2.jpg" width="25%">
+<img src="https://i.imgur.com/zqvv7ke.jpg" width="25%">
 
 Kasin Yamsri 
 Student NO.6010613518
@@ -39,4 +39,4 @@ This is part of the final project of computer engineering at Thammsart Universit
 
 
 
-<img src="https://i.imgur.com/Czql5dp.png" width="75%">
+<img src="https://i.imgur.com/VkV3hD4.png" width="75%">
