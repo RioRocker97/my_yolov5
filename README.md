@@ -37,6 +37,7 @@ This is part of the final project of computer engineering at Thammsart Universit
     - finished reconstucting GUI .now seperating into 2 tab .
     - awaiting API endpoint from server side
     - still can't integrate CV2 live video output into myGUI
+    - try using API with my own server (can send/get result of unknown image)
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 

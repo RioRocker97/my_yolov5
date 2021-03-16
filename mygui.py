@@ -11,6 +11,7 @@ from utils.datasets import LoadWebcam
 import subprocess
 import os
 import pycurl
+server_path = "http://35.236.179.116:5000"
 # ------------------- messy Argprase from detect.py ----------------
 parser = argparse.ArgumentParser()
 parser.add_argument('--weights', nargs='+', type=str, default='mine/cap_unk.pt', help='model.pt path(s)')
@@ -29,7 +30,6 @@ parser.add_argument('--augment', action='store_true', help='augmented inference'
 parser.add_argument('--update', action='store_true', help='update all models')
 arg = parser.parse_args()
 # ------------------------------------------------------------------
-
 # TextHandler Credited to https://gist.github.com/moshekaplan
 class TextHandler(logging.Handler):
     """This class allows you to log to a Tkinter Text or ScrolledText widget"""
@@ -60,12 +60,19 @@ def stop_detect():
 def send_data():
     print("Now send unknown data to Server")
     curl = pycurl.Curl()
-    curl.setopt(pycurl.URL,'http://www.google.com')
+    curl.setopt(pycurl.URL,server_path+"/send")
+    curl.setopt(pycurl.POST,1)
+    curl.setopt(pycurl.HTTPPOST,[
+        ("image",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'retrain\\new_unknown.jpg'))),
+        ("text",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'retrain\\new_unknown.txt')))    
+        ])
+    curl.setopt(pycurl.HTTPHEADER,["Content-Type: multipart/form-data"])
     curl.perform()
-    subprocess.call("cls",shell=True)
-    print("status code :",curl.getinfo(pycurl.HTTP_CODE))
-    #subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'retrain\\new_unknown.jpg'),shell=True)
-    #subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'retrain\\new_unknown.txt'),shell=True)
+    #print("status code :",curl.getinfo(pycurl.HTTP_CODE))
+    if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
+        subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'retrain\\new_unknown.jpg'),shell=True)
+        subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'retrain\\new_unknown.txt'),shell=True)
+        print("Delete sent Files")
     curl.close()
 
 def collect_data():
