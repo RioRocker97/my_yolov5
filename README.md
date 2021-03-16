@@ -33,6 +33,10 @@ This is part of the final project of computer engineering at Thammsart Universit
 - 14/3/2021
     - i filped it all !!!!! reconstuction all my work into 3 seperate unit
     - my part is only handling client side so..... no more re-train yea !
+- 16/3/2021
+    - finished reconstucting GUI .now seperating into 2 tab .
+    - awaiting API endpoint from server side
+    - still can't integrate CV2 live video output into myGUI
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 

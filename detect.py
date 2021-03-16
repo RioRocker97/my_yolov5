@@ -64,6 +64,7 @@ def detect(opt,save_img=False):
 
     # lazy implementation
     num=0
+    new_unk = False;
     count=0 # my count variable
     last_count=0 # my count variable
     max_count=0 # my count variable
@@ -107,33 +108,31 @@ def detect(opt,save_img=False):
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += '%g %ss, ' % (n, names[int(c)])  # add to string
-                    max_count+=n
+                    if(names[int(c)] != 'Unknown'):
+                        max_count+=n
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                        line = (cls, conf, *xywh) if opt.save_conf else (cls, *xywh)  # label format
-                        with open(txt_path + '.txt', 'a') as f:
+                        #line = (cls, conf, *xywh) if opt.save_conf else (cls, *xywh)  # label format . comment it out for lazy implement
+                        line = (cls,*xywh)
+                        with open(txt_path + '_all.txt', 'a') as f:
                             f.write(('%g ' * len(line) + '\n') % line)
-                            
-                            # lazy implemetation
-                            #fname="label\\found_"+str(num)+".txt"
-                            #my_each = open(os.path.join(found_path,fname),'w')
-                            #fname.write(('%g ' * len(line)) % line)
-                            #fname.close # YOLO format for each image that found object 
-                            #print(fname+ "OK")
-                            # will come back to implement soon
-
-                            filename="found_"+str(num)+".jpg" # try to save image that has object
-                            #cv2.imwrite(os.path.join(found_path,filename),im0)
-                            #print(filename+" OK")
-                            num+=1
-                            # lazy implementation
+                        if(names[int(cls)] == 'Unknown' and new_unk == False):
+                            with open(found_path+'new_unknown.txt','a') as f:
+                                f.write(('%g ' * len(line) + '\n') % line)
 
                     if save_img or view_img:  # Add bbox to image
                         label = '%s %.2f' % (names[int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
+                        #try to save Unknown image
+                        if(names[int(cls)] == 'Unknown' and new_unk == False):
+                            filename="new_unknown.jpg"
+                            cv2.imwrite(os.path.join(found_path,filename),im0)
+                            print("New Unknown Found !")
+                            new_unk = True
+
             ### my count ###
             if last_count <= max_count:
                 count +=(max_count - last_count)
@@ -143,12 +142,12 @@ def detect(opt,save_img=False):
 
             # Print time (inference + NMS)
             print('%sDone. (%.2f FPS)' % (s,1/(t2 - t1)))
-            print('Found cap : %g ' % (count))
+            print('Found Object : %g ' % (count))
             # Stream results
             if view_img:
                 cv2.namedWindow('YOLO', cv2.WINDOW_AUTOSIZE) #make specific window close
                 #display text in cv2 . pretty lazy implementaion if u ask me ! 
-                im0 = cv2.putText(im0,'Found cap : '+str(int(count)),(5,100),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
+                im0 = cv2.putText(im0,'Found Object : '+str(int(count)),(5,50),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
                 cv2.imshow('YOLO', im0)
                 if cv2.waitKey(1) == ord('q'):  # q to quit
                     cv2.destroyWindow('YOLO') # might be useful later in tkinter
@@ -170,6 +169,13 @@ def detect(opt,save_img=False):
                         h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                         vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (w, h))
                     vid_writer.write(im0)
+
+        for files in os.listdir(found_path): 
+            if(files=="new_unknown.jpg"):
+                new_unk = True
+                break
+            else:
+                new_unk = False
 
     if save_txt or save_img:
         print('Results saved to %s' % Path(out))
