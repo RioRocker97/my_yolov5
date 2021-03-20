@@ -26,7 +26,7 @@ scroll = scrolledtext.ScrolledText()
 ## Global ###################
 video = 0
 isVideoCreated = False
-isVideoStop = True
+isVideoStop = False
 example = ImageTk.PhotoImage(Image.open("gui_data/goose.png").resize((480,360)))
 icon = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"))
 ####################
@@ -36,18 +36,16 @@ def insertLog(msg,msgtype):
     scroll.insert(tkinter.END,msg + '\n',msgtype)
     scroll.configure(state='disabled')
     scroll.yview(tkinter.END)
-
 def mywebcam():
     global video
-    global isVideoCreated
-    global vdo_stream
-    global example
+
     try:
         if(video.isOpened()):
             insertLog("...Camera is ready...","info")
     except:
         insertLog("### Camera is not loaded ###","error")
     else:
+        live_vdo()
         """
         _,frame = video.read()
         frame = cv2.flip(frame,1)
@@ -57,21 +55,29 @@ def mywebcam():
         example = imageVDO_3
         vdo_stream.configure(image=example)
         """
-        
+def vdostop():
+    global isVideoStop
+    global vdo_stream
+    global video
+    if(not isVideoStop):
+        isVideoStop = True
+        insertLog("...VDO streaming from camera is stopped...","info")
+        video.release()
 def live_vdo():
     global video
     global isVideoStop
     global vdo_stream
     global example
 
-    _,frame = video.read()
-    frame = cv2.flip(frame,1)
-    imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-    imageVDO_2 = Image.fromarray(imageVDO)
-    imageVDO_3 = ImageTk.PhotoImage(image=imageVDO_2)
-    example = imageVDO_3
-    vdo_stream.configure(image=example)
-    vdo_stream.after(10,live_vdo)
+    if(not isVideoStop):
+        _,frame = video.read()
+        frame = cv2.flip(frame,1)
+        imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+        imageVDO_2 = Image.fromarray(imageVDO).resize((480,360))
+        imageVDO_3 = ImageTk.PhotoImage(image=imageVDO_2)
+        example = imageVDO_3
+        vdo_stream.configure(image=example)
+        vdo_stream.after(10,live_vdo)
 def cameraOn():
     global video
     global isVideoCreated
@@ -104,7 +110,7 @@ def buildGUI():
     label1 = ttk.Label(detect_frame,text="Detect Zone")
     vdo_stream = ttk.Label(detect_frame,image=example,borderwidth=5,relief='solid')
     btn1 = ttk.Button(detect_frame,text="Detect",command = mywebcam,style="def.TButton")
-    btn2 = ttk.Button(detect_frame,text="Stop",style="def.TButton")
+    btn2 = ttk.Button(detect_frame,text="Stop",command = vdostop,style="def.TButton")
 
     scroll = scrolledtext.ScrolledText(detect_frame,state='disabled',borderwidth=5)
     scroll.configure(font=('TkFixedFont',12),background="black")

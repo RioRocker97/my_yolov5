@@ -38,6 +38,9 @@ This is part of the final project of computer engineering at Thammsart Universit
     - awaiting API endpoint from server side
     - still can't integrate CV2 live video output into myGUI
     - try using API with my own server (can send/get result of unknown image)
+- 20/3/2021
+    - VDO streaming within window application is available !!!
+    - try to manipulate detect.py to be used inside mygui.py as a function
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 
