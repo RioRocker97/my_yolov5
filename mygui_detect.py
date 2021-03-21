@@ -6,28 +6,32 @@ import cv2
 import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
-
-from models.experimental import attempt_load
+from models.experimental import attempt_load,Ensemble
 from utils.datasets import LoadStreams
 from utils.general import (
     check_img_size, non_max_suppression, apply_classifier, scale_coords,
     xyxy2xywh, plot_one_box, strip_optimizer, set_logging)
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
+import threading
+import subprocess
+
 ## Global Variable ###
-
+dataset = 0
+model = Ensemble()
 #####################
+out, source, weights, view_img, save_txt, imgsz = \
+    "./unknown",\
+    "0",\
+    "./mine/cap_unk.pt",\
+    True,\
+    True,\
+    320
+#######################
+def prepareYolo():
+    global dataset,model
+    global out, source, weights, view_img, save_txt, imgsz
 
-def detect():
-    ################# Preparation ##########################################
-    #try using yolov5M/L . current version is 3.0
-    out, source, weights, view_img, save_txt, imgsz = \
-        "./unknown",\
-        "0",\
-        "./mine/cap_unk.pt",\
-        True,\
-        True,\
-        320
     webcam = source.isnumeric() or source.startswith(('rtsp://', 'rtmp://', 'http://')) or source.endswith('.txt')
     save_img = False
     # Initialize
@@ -47,6 +51,20 @@ def detect():
     view_img = True
     cudnn.benchmark = True  # set True to speed up constant image size inference
     dataset = LoadStreams(source, img_size=imgsz)
+def detect():
+    global dataset,model 
+
+    device = select_device('cpu')
+    half = False
+    webcam = True
+    t0 = time.time()
+    ## my counting variable ##
+    num=0
+    new_unk = False;
+    count=0 # my count variable
+    last_count=0 # my count variable
+    max_count=0 # my count variable
+    found_path=os.path.join(os.path.abspath(os.getcwd()),'unknown\\')
 
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
@@ -56,14 +74,6 @@ def detect():
     t0 = time.time()
     img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
     _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
-
-    # lazy implementation
-    num=0
-    new_unk = False;
-    count=0 # my count variable
-    last_count=0 # my count variable
-    max_count=0 # my count variable
-    found_path=os.path.join(os.path.abspath(os.getcwd()),'unknown\\')
 
     ################# Preparation ##########################################
 
@@ -118,7 +128,7 @@ def detect():
                             with open(found_path+'new_unknown.txt','a') as f:
                                 f.write(('%g ' * len(line) + '\n') % line)
 
-                    if save_img or view_img:  # Add bbox to image
+                    if view_img:  # Add bbox to image
                         label = '%s %.2f' % (names[int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
                         #try to save Unknown image
@@ -163,5 +173,10 @@ def detect():
 
 
 if __name__ == '__main__':
-
+    subprocess.run(["cls"],shell=True)
+    start_load = time.time()
+    prepareYolo()
+    print("Loaded YOLOv5 : (%.3fs)" % (time.time() - start_load))
+    time.sleep(10.0)
     detect()
+

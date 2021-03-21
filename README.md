@@ -43,6 +43,8 @@ This is part of the final project of computer engineering at Thammsart Universit
     - try to manipulate detect.py to be used inside mygui.py as a function
 - 21/3/2021 
     - success ! now using mygui_detect.py for directly using YOLOv5 for this project
+    - successfully seperate preparation code and detection code so i could work around with loading time
+    - using thread for sure !
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 
