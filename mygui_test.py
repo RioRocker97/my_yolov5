@@ -11,8 +11,6 @@ import logging
 import threading
 from tkinter import scrolledtext
 import cv2 
-from detect import detect as runyolo
-from utils.datasets import LoadWebcam
 import subprocess
 import os
 import pycurl

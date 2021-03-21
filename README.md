@@ -41,6 +41,8 @@ This is part of the final project of computer engineering at Thammsart Universit
 - 20/3/2021
     - VDO streaming within window application is available !!!
     - try to manipulate detect.py to be used inside mygui.py as a function
+- 21/3/2021 
+    - success ! now using mygui_detect.py for directly using YOLOv5 for this project
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 
