@@ -14,7 +14,8 @@ import cv2
 import subprocess
 import os
 import pycurl
-
+import time
+from mygui_detect import prepareYolo,runYolo
 ## GUI Global ####################
 frame = tkinter.Tk()
 vdo_stream = ttk.Label()
@@ -35,6 +36,7 @@ def insertLog(msg,msgtype):
     scroll.configure(state='disabled')
     scroll.yview(tkinter.END)
 def mywebcam():
+    """
     global video
 
     try:
@@ -44,7 +46,6 @@ def mywebcam():
         insertLog("### Camera is not loaded ###","error")
     else:
         live_vdo()
-        """
         _,frame = video.read()
         frame = cv2.flip(frame,1)
         imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
@@ -52,7 +53,8 @@ def mywebcam():
         imageVDO_3 = ImageTk.PhotoImage(image=imageVDO_2)
         example = imageVDO_3
         vdo_stream.configure(image=example)
-        """
+    """
+    live_vdo()
 def vdostop():
     global isVideoStop
     global vdo_stream
@@ -68,12 +70,19 @@ def live_vdo():
     global example
 
     if(not isVideoStop):
+        """
         _,frame = video.read()
         frame = cv2.flip(frame,1)
         imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
         imageVDO_2 = Image.fromarray(imageVDO).resize((480,360))
         imageVDO_3 = ImageTk.PhotoImage(image=imageVDO_2)
         example = imageVDO_3
+        """
+        frame = runYolo()
+        imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+        imageVDO2 = Image.fromarray(imageVDO).resize((480,360))
+        imageVDO3 = ImageTk.PhotoImage(image=imageVDO2)
+        example = imageVDO3
         vdo_stream.configure(image=example)
         vdo_stream.after(10,live_vdo)
 def cameraOn():
@@ -82,8 +91,8 @@ def cameraOn():
     insertLog("...Opening Camera...","warn")
 
     video = cv2.VideoCapture(0)
-    video.set(cv2.CAP_PROP_FRAME_WIDTH,480)
-    video.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
+    video.set(cv2.CAP_PROP_FRAME_WIDTH,256)
+    video.set(cv2.CAP_PROP_FRAME_HEIGHT,320)
     if(video.isOpened()):
         #print("...Camera is wokring...")
         insertLog("...Camera is up and running...","info")
@@ -140,11 +149,21 @@ def buildGUI():
     btn3.pack(pady=10,ipadx="10",ipady="10")
 
     frame.iconphoto(False,icon)
-
+def cameraYOLO():
+    start = time.time()
+    try:
+        insertLog("...Preparing Camera && YOLOv5 model...","warn")
+        prepareYolo()
+        insertLog("...Camera and YOLOv5 is ready...",'warn')
+    except:
+        insertLog("### Error loading camera && YoloV5 ###")
+    else:
+        insertLog("Time used : (%.3fs)" % (time.time()-start) ,"warn")
+        isVideoCreated = True
 if __name__ == '__main__':
     buildGUI()
     subprocess.run(["cls"],shell=True)
-    task = threading.Thread(target=cameraOn)
+    task = threading.Thread(target=cameraYOLO)
     task.start()
     task2 = threading.Thread(target=frame.mainloop())
     task2.start()

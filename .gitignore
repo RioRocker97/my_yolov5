@@ -250,3 +250,4 @@ fabric.properties
 !gui_data/*.png
 /myenv
 /retrain
+/unknown
