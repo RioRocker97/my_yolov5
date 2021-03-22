@@ -53,6 +53,7 @@ This is part of the final project of computer engineering at Thammsart Universit
 - Base_DIR\retrain : for saving images and labels for detected image 
 - BASE_DIR\unknown : for saving unknown image to be sent to server
 
-
+## Result
+<img src="https://i.imgur.com/NRknPKA.jpg" width="50%" style="padding-left:200px;">
 
 <img src="https://i.imgur.com/VkV3hD4.png" width="75%">

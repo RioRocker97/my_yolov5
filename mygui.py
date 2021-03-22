@@ -76,7 +76,7 @@ def buildGUI():
     global vdo_stream
     global vdo_slot
     global scroll
-    frame.title('IOT-Project : Client')
+    frame.title('IOT-Project : Client v1.0')
     frame.geometry("800x800")
     frame.resizable(width=False, height=False)
     tab_control = ttk.Notebook(frame)
