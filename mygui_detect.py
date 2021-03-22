@@ -19,17 +19,19 @@ import subprocess
 ## Global Variable ###
 dataset = 0
 model = Ensemble()
+colors = 0
+names = 0
 #####################
 out, source, weights, view_img, save_txt, imgsz = \
     "./unknown",\
     "0",\
     "./mine/cap_unk.pt",\
-    True,\
+    False,\
     True,\
     320
 #######################
 def prepareYolo():
-    global dataset,model
+    global dataset,model,colors,names
     global out, source, weights, view_img, save_txt, imgsz
 
     webcam = source.isnumeric() or source.startswith(('rtsp://', 'rtmp://', 'http://')) or source.endswith('.txt')
@@ -51,7 +53,11 @@ def prepareYolo():
     view_img = True
     cudnn.benchmark = True  # set True to speed up constant image size inference
     dataset = LoadStreams(source, img_size=imgsz)
-def detect():
+
+    # Get names and colors
+    names = model.module.names if hasattr(model, 'module') else model.names
+    colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
+def original():
     global dataset,model 
 
     device = select_device('cpu')
@@ -170,8 +176,8 @@ def detect():
         print('Results saved to %s' % Path(out))
 
     print('Done. (%.3fs)' % (time.time() - t0))
-def runYolo():
-    global dataset,model 
+def runYolo(found_obj_count):
+    global dataset,model,colors,names
 
     device = select_device('cpu')
     half = False
@@ -186,8 +192,8 @@ def runYolo():
     found_path=os.path.join(os.path.abspath(os.getcwd()),'unknown\\')
 
     # Get names and colors
-    names = model.module.names if hasattr(model, 'module') else model.names
-    colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
+    #names = model.module.names if hasattr(model, 'module') else model.names
+    #colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     # Run inference
     t0 = time.time()
@@ -259,23 +265,19 @@ def runYolo():
 
         ### my count ###
         if last_count <= max_count:
-            count +=(max_count - last_count)
+            count += (max_count - last_count)
             last_count = max_count
         if max_count == 0:
             last_count = 0
 
         # Print time (inference + NMS)
-        print('%sDone. (%.2f FPS)' % (s,1/(t2 - t1)))
-        print('Found Object : %g ' % (count))
+        #print('%sDone. (%.2f FPS)' % (s,1/(t2 - t1)))
+        #print('Found Object : %g ' % (count))
+
         # Stream results
         if view_img:
-            cv2.namedWindow('YOLO', cv2.WINDOW_AUTOSIZE) #make specific window close
-            #display text in cv2 . pretty lazy implementaion if u ask me ! 
-            im0 = cv2.putText(im0,'Found Object : '+str(int(count)),(5,50),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
-            cv2.imshow('YOLO', im0)
-            if cv2.waitKey(1) == ord('q'):  # q to quit
-                cv2.destroyWindow('YOLO') # might be useful later in tkinter
-                raise StopIteration
+            im0 = cv2.putText(im0,'Found Object : '+str(int(found_obj_count)),(5,50),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
+            cv2.destroyWindow('YOLO')
 
     # check unknown to prevent duplication
     for files in os.listdir(found_path): 
@@ -288,7 +290,7 @@ def runYolo():
     #if save_txt:
     #    print('Results saved to %s' % Path(out))
 
-    return im0
+    return int(count),im0
     #print('Done. (%.3fs)' % (time.time() - t0))
 
 if __name__ == '__main__':

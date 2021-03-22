@@ -26,8 +26,11 @@ scroll = scrolledtext.ScrolledText()
 video = 0
 isVideoCreated = False
 isVideoStop = False
-example = ImageTk.PhotoImage(Image.open("gui_data/goose.png").resize((480,360)))
+vdo_slot = ImageTk.PhotoImage(Image.open("gui_data/goose.png").resize((480,360)))
 icon = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"))
+obj_count = 0
+last_count = 0
+server_path = "http://35.236.179.116:5000"
 ####################
 def insertLog(msg,msgtype):
     global scroll
@@ -36,54 +39,38 @@ def insertLog(msg,msgtype):
     scroll.configure(state='disabled')
     scroll.yview(tkinter.END)
 def mywebcam():
-    """
-    global video
-
-    try:
-        if(video.isOpened()):
-            insertLog("...Camera is ready...","info")
-    except:
-        insertLog("### Camera is not loaded ###","error")
-    else:
+    global isVideoCreated
+    if(isVideoCreated):
+        insertLog("...Begin detection...","info")
         live_vdo()
-        _,frame = video.read()
-        frame = cv2.flip(frame,1)
-        imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-        imageVDO_2 = Image.fromarray(imageVDO)
-        imageVDO_3 = ImageTk.PhotoImage(image=imageVDO_2)
-        example = imageVDO_3
-        vdo_stream.configure(image=example)
-    """
-    live_vdo()
+    else:
+        insertLog("### Camera is not loaded ###","error")
 def vdostop():
     global isVideoStop
-    global vdo_stream
-    global video
     if(not isVideoStop):
         isVideoStop = True
-        insertLog("...VDO streaming from camera is stopped...","info")
-        video.release()
+        insertLog("...VDO streaming from camera is stopped...","warn")
+        if(obj_count != 0):
+            insertLog("Found Objects : "+str(obj_count),"ok")
+        else:
+            insertLog("...No Objects Found...","info")
 def live_vdo():
-    global video
-    global isVideoStop
-    global vdo_stream
-    global example
-
+    global isVideoStop,vdo_stream,vdo_slot,obj_count,last_count
     if(not isVideoStop):
-        """
-        _,frame = video.read()
-        frame = cv2.flip(frame,1)
-        imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-        imageVDO_2 = Image.fromarray(imageVDO).resize((480,360))
-        imageVDO_3 = ImageTk.PhotoImage(image=imageVDO_2)
-        example = imageVDO_3
-        """
-        frame = runYolo()
+
+        max_count,frame = runYolo(obj_count)
         imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
         imageVDO2 = Image.fromarray(imageVDO).resize((480,360))
         imageVDO3 = ImageTk.PhotoImage(image=imageVDO2)
-        example = imageVDO3
-        vdo_stream.configure(image=example)
+        vdo_slot = imageVDO3
+        vdo_stream.configure(image=vdo_slot)
+
+        if last_count <= max_count:
+            obj_count += (max_count - last_count)
+            last_count = max_count
+        if max_count == 0:
+            last_count = 0
+
         vdo_stream.after(10,live_vdo)
 def cameraOn():
     global video
@@ -99,7 +86,7 @@ def cameraOn():
         isVideoCreated = True
 def buildGUI():
     global vdo_stream
-    global example
+    global vdo_slot
     global scroll
     print("This is my GUI ")
     frame.title('IOT-Project')
@@ -115,7 +102,7 @@ def buildGUI():
     # Detect Tab widget
     button_style = ttk.Style().configure("def.TButton",font=("Courier",16))
     label1 = ttk.Label(detect_frame,text="Detect Zone")
-    vdo_stream = ttk.Label(detect_frame,image=example,borderwidth=5,relief='solid')
+    vdo_stream = ttk.Label(detect_frame,image=vdo_slot,borderwidth=5,relief='solid')
     btn1 = ttk.Button(detect_frame,text="Detect",command = mywebcam,style="def.TButton")
     btn2 = ttk.Button(detect_frame,text="Stop",command = vdostop,style="def.TButton")
 
@@ -124,6 +111,7 @@ def buildGUI():
     scroll.tag_config('info',foreground='#15A0CA')
     scroll.tag_config('warn',foreground='#DE9B00')
     scroll.tag_config('error',foreground='#DA3C15')
+    scroll.tag_config('ok',foreground='#00F942')
 
     label1.config(font=("Courier", 36))
 
@@ -136,10 +124,10 @@ def buildGUI():
     #File Tab widget
 
     box3 = vdo_stream
-    example2 =example
+    vdo_slot2 =vdo_slot
     label1 = ttk.Label(file_frame,text="File Zone")
-    box3 = ttk.Label(file_frame,image=example2,borderwidth=5,relief='solid')
-    btn1 = ttk.Button(file_frame,text="Open",style="def.TButton")
+    box3 = ttk.Label(file_frame,image=vdo_slot2,borderwidth=5,relief='solid')
+    btn1 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
     btn3 = ttk.Button(file_frame,text="Send",style="def.TButton")
     label1.config(font=("Courier", 36))
 
@@ -150,16 +138,37 @@ def buildGUI():
 
     frame.iconphoto(False,icon)
 def cameraYOLO():
+    global isVideoCreated
     start = time.time()
     try:
         insertLog("...Preparing Camera && YOLOv5 model...","warn")
         prepareYolo()
-        insertLog("...Camera and YOLOv5 is ready...",'warn')
+        insertLog("...Camera and YOLOv5 is ready...",'ok')
     except:
-        insertLog("### Error loading camera && YoloV5 ###")
+        insertLog("### Error loading camera && YoloV5 ###",'error')
     else:
-        insertLog("Time used : (%.3fs)" % (time.time()-start) ,"warn")
+        insertLog("Time used : (%.3fs)" % (time.time()-start) ,"ok")
         isVideoCreated = True
+def send_data():
+    #print("Now send unknown data to Server")
+    curl = pycurl.Curl()
+    curl.setopt(pycurl.URL,server_path+"/send")
+    curl.setopt(pycurl.POST,1)
+    curl.setopt(pycurl.HTTPPOST,[
+        ("image",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.jpg'))),
+        ("text",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.txt')))    
+        ])
+    curl.setopt(pycurl.HTTPHEADER,["Content-Type: multipart/form-data"])
+    curl.perform()
+    #print("status code :",curl.getinfo(pycurl.HTTP_CODE))
+    if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
+        subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\new_unknown.jpg'),shell=True)
+        subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\new_unknown.txt'),shell=True)
+        print("Delete sent Files")
+    curl.close()
+def collect_data():
+    #print("Now Showing new image data to be trained in this model")
+    subprocess.call("explorer "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\'), shell=True)
 if __name__ == '__main__':
     buildGUI()
     subprocess.run(["cls"],shell=True)

@@ -46,9 +46,12 @@ This is part of the final project of computer engineering at Thammsart Universit
     - successfully seperate preparation code and detection code so i could work around with loading time
     - using thread for sure !
     - YOLOv5 implementation is almost completed. 
+- 22/3/2021
+    - MyGUI.py is good to go ! . no more using subprocess to call Yolov5
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 
+- BASE_DIR\unknown : for saving unknown image to be sent to server
 
 
 
