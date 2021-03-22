@@ -27,10 +27,14 @@ video = 0
 isVideoCreated = False
 isVideoStop = False
 vdo_slot = ImageTk.PhotoImage(Image.open("gui_data/goose.png").resize((480,360)))
+default = ImageTk.PhotoImage(Image.open("gui_data/overwork.jpg").resize((480,360)))
 icon = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"))
 obj_count = 0
 last_count = 0
-server_path = "http://35.236.179.116:5000"
+# my main server
+#server_path = "http://35.236.179.116:5000"
+# my backup server (integrated with mongoDB)
+server_path = "http://34.95.21.118:5000"
 ####################
 def insertLog(msg,msgtype):
     global scroll
@@ -111,11 +115,11 @@ def buildGUI():
     #File Tab widget
 
     box3 = vdo_stream
-    vdo_slot2 =vdo_slot
+    #vdo_slot2 =vdo_slot
     label1 = ttk.Label(file_frame,text="File Zone")
-    box3 = ttk.Label(file_frame,image=vdo_slot2,borderwidth=5,relief='solid')
+    box3 = ttk.Label(file_frame,image=default,borderwidth=5,relief='solid')
     btn1 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
-    btn3 = ttk.Button(file_frame,text="Send",style="def.TButton")
+    btn3 = ttk.Button(file_frame,text="Send",command=send_data,style="def.TButton")
     label1.config(font=("Courier", 36))
 
     label1.pack()
@@ -137,20 +141,19 @@ def cameraYOLO():
         insertLog("Time used : (%.2fs)" % (time.time()-start) ,"ok")
         isVideoCreated = True
 def send_data():
-    #print("Now send unknown data to Server")
+    print("Now send unknown data to Server")
     curl = pycurl.Curl()
-    curl.setopt(pycurl.URL,server_path+"/send")
+    #curl.setopt(pycurl.URL,server_path+"/send")
+    curl.setopt(pycurl.URL,server_path+"/api/uploadunknown")
     curl.setopt(pycurl.POST,1)
     curl.setopt(pycurl.HTTPPOST,[
-        ("image",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.jpg'))),
-        ("text",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.txt')))    
+        ("image",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.jpg'))),  
         ])
     curl.setopt(pycurl.HTTPHEADER,["Content-Type: multipart/form-data"])
     curl.perform()
     #print("status code :",curl.getinfo(pycurl.HTTP_CODE))
     if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
         subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\new_unknown.jpg'),shell=True)
-        subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\new_unknown.txt'),shell=True)
         print("Delete sent Files")
     curl.close()
 def collect_data():

@@ -48,6 +48,7 @@ This is part of the final project of computer engineering at Thammsart Universit
     - YOLOv5 implementation is almost completed. 
 - 22/3/2021
     - MyGUI.py is good to go ! . no more using subprocess to call Yolov5
+    - Server YOLOv5 is up and running !
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 
