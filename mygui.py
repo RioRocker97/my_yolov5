@@ -31,10 +31,10 @@ default = ImageTk.PhotoImage(Image.open("gui_data/overwork.jpg").resize((480,360
 icon = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"))
 obj_count = 0
 last_count = 0
-# my main server
-#server_path = "http://35.236.179.116:5000"
+# my main server (integrated with mongoDB)
+server_path = "http://104.199.135.213:5000"
 # my backup server (integrated with mongoDB)
-server_path = "http://34.95.21.118:5000"
+#server_path = "http://34.95.21.118:5000"
 ####################
 def insertLog(msg,msgtype):
     global scroll
