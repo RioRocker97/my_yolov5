@@ -1,5 +1,7 @@
 **DISCLAIMER:This repository is based to [Ultralytics/Yolov5](https://github.com/ultralytics/yolov5) . I do not own or claim to be the creator of their implemented YOLO object detection technology.**
 
+**:clock4:cleaning Repo coz' it too messy:clock4:**
+
 # IOT-project for counting product
 This project's goal is to integrated YOLO object detection into my basic GUI python-based program for counting product . 
 
@@ -49,6 +51,9 @@ This is part of the final project of computer engineering at Thammsart Universit
 - 22/3/2021
     - MyGUI.py is good to go ! . no more using subprocess to call Yolov5
     - Server YOLOv5 is up and running !
+- 31/3/2021
+    - Cleaning Repo from clean_work branch 
+    - try to delete non-essential file out of this project coz' it too messy!
 ## New File Location
 
 - Base_DIR\retrain : for saving images and labels for detected image 

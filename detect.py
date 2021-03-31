@@ -68,7 +68,7 @@ def detect(opt,save_img=False):
     count=0 # my count variable
     last_count=0 # my count variable
     max_count=0 # my count variable
-    found_path=os.path.join(os.path.abspath(os.getcwd()),'retrain\\')
+    found_path=os.path.join(os.path.abspath(os.getcwd()),'unknown\\')
     for path, img, im0s, vid_cap in dataset:
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32

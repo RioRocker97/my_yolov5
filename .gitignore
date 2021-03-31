@@ -249,5 +249,5 @@ fabric.properties
 !gui_data/*.jpg
 !gui_data/*.png
 /myenv
-/retrain
 /unknown
+/.vscode

@@ -34,7 +34,7 @@ def prepareYolo():
     global dataset,model,colors,names
     global out, source, weights, view_img, save_txt, imgsz
 
-    webcam = source.isnumeric() or source.startswith(('rtsp://', 'rtmp://', 'http://')) or source.endswith('.txt')
+    webcam = True
     save_img = False
     # Initialize
     #set_logging()
