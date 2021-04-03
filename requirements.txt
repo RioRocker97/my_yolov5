@@ -13,15 +13,8 @@ torch>=1.6.0
 torchvision>=0.7.0
 tqdm>=4.41.0
 
-# coco ----------------------------------------
-# pycocotools>=2.0
-
-# export --------------------------------------
-# packaging  # for coremltools
-# coremltools==4.0
-# onnx>=1.7.0
-# scikit-learn==0.19.2  # for coreml quantization
-
-# extras --------------------------------------
-# thop  # FLOPS computation
-# seaborn  # plotting
+# yolo-server ------------------------------------
+flask>=1.0
+flask_mongoengine>=0.9
+jwt>=1.0
+ipython

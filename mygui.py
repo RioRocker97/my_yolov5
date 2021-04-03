@@ -15,6 +15,8 @@ import subprocess
 import os
 import pycurl
 import time
+import shutil
+from io import BytesIO
 from mygui_detect import prepareYolo,runYolo
 ## GUI Global ####################
 frame = tkinter.Tk()
@@ -27,12 +29,14 @@ video = 0
 isVideoCreated = False
 isVideoStop = False
 vdo_slot = ImageTk.PhotoImage(Image.open("gui_data/goose.png").resize((480,360)))
-default = ImageTk.PhotoImage(Image.open("gui_data/overwork.jpg").resize((480,360)))
+pic_slot = ImageTk.PhotoImage(Image.open("gui_data/overwork.jpg").resize((480,360)))
 icon = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"))
 obj_count = 0
 last_count = 0
+MODEL_PATH = "./mine/cap_unk.pt"
 # my main server (integrated with mongoDB)
-server_path = "http://104.199.135.213:5000"
+#server_path = "http://104.199.135.213:5000"
+server_path = "http://riorocker97.com"
 # my backup server (integrated with mongoDB)
 #server_path = "http://34.95.21.118:5000"
 ####################
@@ -117,7 +121,7 @@ def buildGUI():
     box3 = vdo_stream
     #vdo_slot2 =vdo_slot
     label1 = ttk.Label(file_frame,text="File Zone")
-    box3 = ttk.Label(file_frame,image=default,borderwidth=5,relief='solid')
+    box3 = ttk.Label(file_frame,image=pic_slot,borderwidth=5,relief='solid')
     btn1 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
     btn3 = ttk.Button(file_frame,text="Send",command=send_data,style="def.TButton")
     label1.config(font=("Courier", 36))
@@ -133,7 +137,7 @@ def cameraYOLO():
     start = time.time()
     try:
         insertLog("...Preparing Camera && YOLOv5 model...","warn")
-        prepareYolo()
+        prepareYolo(MODEL_PATH)
         insertLog("...Camera and YOLOv5 is ready...",'ok')
     except:
         insertLog("### Error loading camera && YoloV5 ###",'error')
@@ -143,6 +147,7 @@ def cameraYOLO():
 def send_data():
     print("Now send unknown data to Server")
     curl = pycurl.Curl()
+    rep = BytesIO()
     #curl.setopt(pycurl.URL,server_path+"/send")
     curl.setopt(pycurl.URL,server_path+"/api/uploadunknown")
     curl.setopt(pycurl.POST,1)
@@ -150,17 +155,26 @@ def send_data():
         ("image",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.jpg'))),  
         ])
     curl.setopt(pycurl.HTTPHEADER,["Content-Type: multipart/form-data"])
+    curl.setopt(pycurl.WRITEDATA,rep)
     curl.perform()
     #print("status code :",curl.getinfo(pycurl.HTTP_CODE))
     if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
         subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\new_unknown.jpg'),shell=True)
+        subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\new_unknown.txt'),shell=True)
         print("Delete sent Files")
+        rep_body = rep.getvalue()
+        print(rep_body.decode('iso-8859-1'))
     curl.close()
+def clearUnknown():
+    if os.path.exists("./unknown") :
+        shutil.rmtree("./unknown")
+    os.makedirs("./unknown")
 def collect_data():
     #print("Now Showing new image data to be trained in this model")
     subprocess.call("explorer "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\'), shell=True)
 if __name__ == '__main__':
     buildGUI()
+    clearUnknown()
     subprocess.run(["cls"],shell=True)
     task = threading.Thread(target=cameraYOLO)
     task.start()
