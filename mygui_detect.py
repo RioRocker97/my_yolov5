@@ -21,27 +21,24 @@ dataset = 0
 model = Ensemble()
 colors = 0
 names = 0
+device = 0
+half = False
+new_unk = False
+imgsz = 320
 #####################
-out, source, weights, view_img, save_txt, imgsz = \
-    "./unknown",\
-    "0",\
-    "./mine/cap_unk.pt",\
-    False,\
-    True,\
-    320
 #######################
-def prepareYolo():
-    global dataset,model,colors,names
-    global out, source, weights, view_img, save_txt, imgsz
 
-    webcam = True
-    save_img = False
-    # Initialize
-    #set_logging()
-    device = select_device('cpu')
-    if os.path.exists(out):  # output dir
-        shutil.rmtree(out)  # delete dir
-    os.makedirs(out)  # make new dir
+#######################
+def prepareYolo(model_path):
+    global dataset,model,colors,names,device,half,imgsz
+
+    weights = model_path
+    if(torch.cuda.device_count() == 0):
+        print('Using CPU')
+        device = select_device('cpu')
+    else:
+        print('Using GPU : '+torch.cuda.get_device_name(0))
+        device = select_device('0')
     half = device.type != 'cpu'  # half precision only supported on CUDA
 
     # Load model
@@ -50,13 +47,13 @@ def prepareYolo():
     if half:
         model.half()  # to FP16
 
-    view_img = True
     cudnn.benchmark = True  # set True to speed up constant image size inference
-    dataset = LoadStreams(source, img_size=imgsz)
+    dataset = LoadStreams('0', img_size=imgsz)
 
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
+"""
 def original():
     global dataset,model 
 
@@ -176,24 +173,19 @@ def original():
         print('Results saved to %s' % Path(out))
 
     print('Done. (%.3fs)' % (time.time() - t0))
+"""
 def runYolo(found_obj_count):
-    global dataset,model,colors,names
+    global dataset,model,colors,names,device,half,new_unk
 
-    device = select_device('cpu')
-    half = False
-    webcam = True
     t0 = time.time()
     ## my counting variable ##
     num=0
-    new_unk = False;
     count=0 # my count variable
     last_count=0 # my count variable
     max_count=0 # my count variable
+    ##########################
     found_path=os.path.join(os.path.abspath(os.getcwd()),'unknown\\')
 
-    # Get names and colors
-    #names = model.module.names if hasattr(model, 'module') else model.names
-    #colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     # Run inference
     t0 = time.time()
@@ -211,7 +203,6 @@ def runYolo(found_obj_count):
 
     # Inference
     t1 = time_synchronized() #start predictiong
-    #pred = model(img, augment=opt.augment)[0]
     pred = model(img, augment=False)[0]
 
     # Apply NMS
@@ -220,13 +211,10 @@ def runYolo(found_obj_count):
 
     # Process detections
     for i, det in enumerate(pred):  # detections per image
-        if webcam:  # batch_size >= 1
-            p, s, im0 = path[i], '%g: ' % i, im0s[i].copy()
-        else:
-            p, s, im0 = path, '', im0s
+        p, s, im0 = path[i], '%g: ' % i, im0s[i].copy()
 
-        save_path = str(Path(out) / Path(p).name)
-        txt_path =  str(Path(out) / Path(p).stem) + ('_%g' % 69)
+        save_path = str(Path("./unknown") / Path(p).name)
+        txt_path =  str(Path("./unknown") / Path(p).stem)
         s += '%gx%g ' % img.shape[2:]  # print string
         gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
         max_count=0
@@ -243,25 +231,23 @@ def runYolo(found_obj_count):
 
             # Write results
             for *xyxy, conf, cls in reversed(det):
-                if save_txt:  # Write to file
-                    xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                    #line = (cls, conf, *xywh) if opt.save_conf else (cls, *xywh)  # label format . comment it out for lazy implement
-                    line = (cls,*xywh)
-                    with open(txt_path + '_all.txt', 'a') as f:
+                xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
+                #line = (cls, conf, *xywh) if opt.save_conf else (cls, *xywh)  # label format . comment it out for lazy implement
+                line = (cls,*xywh)
+                with open(txt_path + '_all.txt', 'a') as f:
+                    f.write(('%g ' * len(line) + '\n') % line)
+                if(names[int(cls)] == 'Unknown' and new_unk == False):
+                    with open(found_path+'new_unknown.txt','a') as f:
                         f.write(('%g ' * len(line) + '\n') % line)
-                    if(names[int(cls)] == 'Unknown' and new_unk == False):
-                        with open(found_path+'new_unknown.txt','a') as f:
-                            f.write(('%g ' * len(line) + '\n') % line)
 
-                if view_img:  # Add bbox to image
-                    label = '%s %.2f' % (names[int(cls)], conf)
-                    plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
-                    #try to save Unknown image
-                    if(names[int(cls)] == 'Unknown' and new_unk == False):
-                        filename="new_unknown.jpg"
-                        cv2.imwrite(os.path.join(found_path,filename),im0)
-                        print("New Unknown Found !")
-                        new_unk = True
+                label = '%s %.2f' % (names[int(cls)], conf)
+                plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
+                #try to save Unknown image
+                if(names[int(cls)] == 'Unknown' and new_unk == False):
+                    filename="new_unknown.jpg"
+                    cv2.imwrite(os.path.join(found_path,filename),im0)
+                    print("New Unknown Found !")
+                    new_unk = True
 
         ### my count ###
         if last_count <= max_count:
@@ -270,14 +256,9 @@ def runYolo(found_obj_count):
         if max_count == 0:
             last_count = 0
 
-        # Print time (inference + NMS)
-        #print('%sDone. (%.2f FPS)' % (s,1/(t2 - t1)))
-        #print('Found Object : %g ' % (count))
-
         # Stream results
-        if view_img:
-            im0 = cv2.putText(im0,'Found Object : '+str(int(found_obj_count)),(5,50),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
-            cv2.destroyWindow('YOLO')
+        im0 = cv2.putText(im0,'Found Object : '+str(int(found_obj_count)),(5,50),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
+        cv2.destroyWindow('YOLO')
 
     # check unknown to prevent duplication
     for files in os.listdir(found_path): 
@@ -287,19 +268,6 @@ def runYolo(found_obj_count):
         else:
             new_unk = False
 
-    #if save_txt:
-    #    print('Results saved to %s' % Path(out))
-
     return int(count),im0
-    #print('Done. (%.3fs)' % (time.time() - t0))
 
-if __name__ == '__main__':
-    subprocess.run(["cls"],shell=True)
-    start_load = time.time()
-    prepareYolo()
-    print("Loaded YOLOv5 : (%.3fs)" % (time.time() - start_load))
-    time.sleep(3.0)
-    start_load = time.time()
-    while(time.time()-start_load <= 20.0):
-        runYolo()
 

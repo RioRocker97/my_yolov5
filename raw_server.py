@@ -58,8 +58,6 @@ class Unknown(db.Document):
          "file": self.file,
 
       }
-   
-
 class Labeled(db.Document):
    ids = db.StringField()
    filename = db.StringField()
@@ -76,24 +74,6 @@ class Labeled(db.Document):
          "lebeledBy": self.lebeledBy,
 
       }
-
-class Labeled(db.Document):
-   ids = db.StringField()
-   filename = db.StringField()
-   identify = db.StringField()
-   lebeledBy = db.StringField()
-
-   def to_json(self):
-
-      return {
-
-         "ids": self.ids,
-         "filename": self.filename,
-         "identify": self.identify,
-         "lebeledBy": self.lebeledBy,
-
-      }
-
 class Device(db.Document):
    ids = db.StringField(unique=True)
    username = db.StringField(unique=True)
@@ -126,7 +106,6 @@ class Model(db.Document):
          "pathfile": self.pathfile,
       
       }
-
 class Total(db.Document):
 
    ids = db.StringField()
@@ -143,8 +122,6 @@ class Total(db.Document):
         
       }
 
-
-  
 
 #######AUTHENTICATION########
 def token_required(f):
@@ -319,27 +296,6 @@ def getTotal():
    for total in Total.objects[:]:
       output.append(total)
    return jsonify({'result':output})
-
-
-
-   
-
-
-# @app.route('/api/info/getClient/', methods=['GET'])
-# def getAllClient(uniqueName):
-#   # client = Device.objects(uniqueName=)
-#     output = []
-#    for client in Device.objects[:]:
-#       output.append(client)
-#    return jsonify({'result':output})
-
-
-
-
-#JWT AUTH
-
-#MODEL
-
 
 
 if __name__ == '__main__':

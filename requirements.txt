@@ -16,3 +16,5 @@ tqdm>=4.41.0
 # yolo-server ------------------------------------
 flask>=1.0
 flask_mongoengine>=0.9
+jwt>=1.0
+ipython

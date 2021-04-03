@@ -99,6 +99,9 @@ def api_lebeled():
 def api_each_labeled():
    pass
 
+@app.route('/',methods=['GET'])
+def index():
+   return "Something is coming"
 if __name__ == '__main__':
     subprocess.call("clear",shell=True)
-    app.run(debug=True,host='0.0.0.0')
+    app.run(debug=True,host='0.0.0.0',port=80)
