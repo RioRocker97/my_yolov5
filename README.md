@@ -55,6 +55,9 @@ This is part of the final project of computer engineering at Thammsart Universit
 - 3/4/2021
     - Cleaning completed !
     - now client+server code can work together in single Repo
+- 6/4/2021
+    - can send image to detect at yolo-server 
+    - time to process result is pretty good (0.2 sec)
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server

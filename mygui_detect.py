@@ -123,14 +123,15 @@ def runYolo(found_obj_count):
                     with open(found_path+'new_unknown.txt','a') as f:
                         f.write(('%g ' * len(line) + '\n') % line)
 
-                label = '%s %.2f' % (names[int(cls)], conf)
-                plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
                 #try to save Unknown image
                 if(names[int(cls)] == 'Unknown' and new_unk == False):
                     filename="new_unknown.jpg"
                     cv2.imwrite(os.path.join(found_path,filename),im0)
                     print("New Unknown Found !")
                     new_unk = True
+
+                label = '%s %.2f' % (names[int(cls)], conf)
+                plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
 
                 if onlyOne :
                     print("\nFound : %s at %.2f %.2f %.2f %.2f " % (names[int(cls)],line[1],line[2],line[3],line[4]))

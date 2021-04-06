@@ -16,11 +16,14 @@ import os
 import pycurl
 import time
 import shutil
+import json
+import base64
 from io import BytesIO
 from mygui_detect import prepareYolo,runYolo
 ## GUI Global ####################
 frame = tkinter.Tk()
 vdo_stream = ttk.Label()
+server_res = ttk.Label()
 scroll = scrolledtext.ScrolledText()
 ###################
 
@@ -81,8 +84,8 @@ def live_vdo():
 
         vdo_stream.after(10,live_vdo)
 def buildGUI():
-    global vdo_stream
-    global vdo_slot
+    global vdo_stream,server_res
+    global vdo_slot,pic_slot
     global scroll
     frame.title('IOT-Project : Client v1.0')
     frame.geometry("800x800")
@@ -118,16 +121,15 @@ def buildGUI():
 
     #File Tab widget
 
-    box3 = vdo_stream
     #vdo_slot2 =vdo_slot
     label1 = ttk.Label(file_frame,text="File Zone")
-    box3 = ttk.Label(file_frame,image=pic_slot,borderwidth=5,relief='solid')
+    server_res = ttk.Label(file_frame,image=pic_slot,borderwidth=5,relief='solid')
     btn1 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
     btn3 = ttk.Button(file_frame,text="Send",command=send_data,style="def.TButton")
     label1.config(font=("Courier", 36))
 
     label1.pack()
-    box3.pack(pady="10")
+    server_res.pack(pady="10")
     btn1.pack(pady=10,ipadx="10",ipady="10")
     btn3.pack(pady=10,ipadx="10",ipady="10")
 
@@ -145,6 +147,7 @@ def cameraYOLO():
         insertLog("Time used : (%.2fs)" % (time.time()-start) ,"ok")
         isVideoCreated = True
 def send_data():
+    global pic_slot,server_res
     print("Now send unknown data to Server")
     curl = pycurl.Curl()
     rep = BytesIO()
@@ -159,11 +162,13 @@ def send_data():
     curl.perform()
     #print("status code :",curl.getinfo(pycurl.HTTP_CODE))
     if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
-        subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\new_unknown.jpg'),shell=True)
-        subprocess.call("del "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\new_unknown.txt'),shell=True)
-        print("Delete sent Files")
-        rep_body = rep.getvalue()
-        print(rep_body.decode('iso-8859-1'))
+        rep_body = json.loads(rep.getvalue())
+        buff = BytesIO(base64.b64decode(rep_body['image']))
+        result = Image.open(buff).resize((480,360))
+        res2 = ImageTk.PhotoImage(image=result)
+        pic_slot = res2
+        server_res.configure(image=pic_slot)
+
     curl.close()
 def clearUnknown():
     if os.path.exists("./unknown") :
