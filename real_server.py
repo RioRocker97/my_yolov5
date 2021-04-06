@@ -1,3 +1,9 @@
+###############################################
+#                                             #
+# Only work on Linux . i didn't do flexibility coding yet. #
+#                                             #
+############################################### 
+
 from flask import Flask,make_response,request
 from flask_mongoengine import MongoEngine
 import os
@@ -38,9 +44,6 @@ class Unknown(db.Document):
          "file": self.file,
 
       }
-   
-
-
 class Labeled(db.Document):
    ids = db.StringField()
    filename = db.StringField()
@@ -67,17 +70,11 @@ def api_upload_unknown():
         filename = "new_unknown_"+str(num)
         time = 0
 
-        file.save(os.path.join(app.config["IMAGE_UPLOADS"], save_path +filename+".jpg"))
+        #file.save(os.path.join(app.config["IMAGE_UPLOADS"], save_path +filename+".jpg"))
         
-        unknown1 = Unknown(ids=num,filename=filename,times=time,file=file)
+        #unknown1 = Unknown(ids=num,filename=filename,times=time,file=file)
         
-        unknown1.save()
-
-        subprocess.call("python3 detect.py "+ 
-        "--source " +save_path+filename+".jpg " +
-        "--project api_unknown "+
-        "--name yolo_result"
-        ,shell=True)
+        #unknown1.save()
 
         return "new_unknown_"+str(num)+".jpg have been Saved!"
 
@@ -101,7 +98,7 @@ def api_each_labeled():
 
 @app.route('/',methods=['GET'])
 def index():
-   return "Something is coming"
+   return "Something is coming..."
 if __name__ == '__main__':
     subprocess.call("clear",shell=True)
     app.run(debug=True,host='0.0.0.0',port=80)
