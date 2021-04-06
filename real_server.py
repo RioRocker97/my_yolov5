@@ -4,11 +4,17 @@
 #                                             #
 ############################################### 
 
-from flask import Flask,make_response,request
+from flask import Flask,make_response,request,jsonify
 from flask_mongoengine import MongoEngine
 import os
 import subprocess
-
+import time
+import cv2
+import shutil
+import base64
+from PIL import Image
+from io import BytesIO
+from mygui_detect import prepareYolo,runYolo
 
 app = Flask(__name__)
 
@@ -64,19 +70,30 @@ class Labeled(db.Document):
 @app.route('/api/uploadunknown', methods=['POST'])
 def api_upload_unknown():
    if request.files:
-        save_path = os.getcwd()+'/api_unknown/'
-        num = len(os.listdir(save_path))+1
-        file = request.files["image"] 
-        filename = "new_unknown_"+str(num)
-        time = 0
+         save_path = os.getcwd()+'/api_unknown/'
+         num = len(os.listdir(save_path+'new/'))+1
+         file = request.files["image"] 
+         filename = "new_unknown_"+str(num)
+         file.save(save_path+"new/"+filename+".jpg")
 
-        #file.save(os.path.join(app.config["IMAGE_UPLOADS"], save_path +filename+".jpg"))
-        
-        #unknown1 = Unknown(ids=num,filename=filename,times=time,file=file)
-        
-        #unknown1.save()
+         t0 = time.time()
+         prepareYolo("./mine/yolov5s.pt",True,save_path+"new/"+filename+".jpg")
+         _,res = runYolo(0)
+         image = cv2.cvtColor(res,cv2.COLOR_BGR2RGB)
+         image2 = Image.fromarray(image).resize((480,360))
+         print(image2)
+         image2.save(save_path+"res/"+filename+".jpg")
+         #unknown1 = Unknown(ids=num,filename=filename,times=time,file=file)
+         #unknown1.save()
 
-        return "new_unknown_"+str(num)+".jpg have been Saved!"
+         buff = BytesIO()
+         image2.save(buff, format="JPEG")
+         img_str = base64.b64encode(buff.getvalue()).decode('utf-8')
+
+         return jsonify(
+            result="Found Object",
+            image=img_str
+         )
 
 
 @app.route('/api/dbImages', methods=['POST'])
@@ -100,5 +117,11 @@ def api_each_labeled():
 def index():
    return "Something is coming..."
 if __name__ == '__main__':
-    subprocess.call("clear",shell=True)
-    app.run(debug=True,host='0.0.0.0',port=80)
+   subprocess.call("clear",shell=True)
+   if os.path.exists('./api_unknown/new') :
+      shutil.rmtree('./api_unknown/new') 
+   os.makedirs('./api_unknown/new') 
+   if os.path.exists('./api_unknown/res') :
+      shutil.rmtree('./api_unknown/res') 
+   os.makedirs('./api_unknown/res') 
+   app.run(debug=True,host='0.0.0.0',port=80)
