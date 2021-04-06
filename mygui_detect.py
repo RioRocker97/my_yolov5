@@ -65,7 +65,7 @@ def runYolo(found_obj_count):
     last_count=0 # my count variable
     max_count=0 # my count variable
     ##########################
-    found_path=os.path.join(os.path.abspath(os.getcwd()),'unknown\\')
+    found_path=os.path.join(os.path.abspath(os.getcwd()),'unknown/')
 
 
     # Run inference
