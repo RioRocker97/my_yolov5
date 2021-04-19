@@ -58,6 +58,10 @@ This is part of the final project of computer engineering at Thammsart Universit
 - 6/4/2021
     - can send image to detect at yolo-server 
     - time to process result is pretty good (0.2 sec)
+- 19/4/2021
+    - fix server file because why not ? it a part of my job
+    - using token is available now
+    - need to integrate registration and login into myGUI
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server

@@ -160,7 +160,6 @@ def send_data():
     curl.setopt(pycurl.HTTPHEADER,["Content-Type: multipart/form-data"])
     curl.setopt(pycurl.WRITEDATA,rep)
     curl.perform()
-    #print("status code :",curl.getinfo(pycurl.HTTP_CODE))
     if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
         rep_body = json.loads(rep.getvalue())
         buff = BytesIO(base64.b64decode(rep_body['image']))
