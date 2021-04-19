@@ -145,7 +145,8 @@ def runYolo(found_obj_count):
 
         # Stream results
         if not onlyOne :
-            im0 = cv2.putText(im0,'Found Object : '+str(int(found_obj_count)),(5,50),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
+            im0 = cv2.rectangle(im0,(0,0),(300,40),(0,0,0),cv2.FILLED)
+            im0 = cv2.putText(im0,'Found Object : '+str(int(found_obj_count)),(2,35),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
             cv2.destroyWindow('YOLO')
 
     # check unknown to prevent duplication

@@ -93,12 +93,81 @@ def buildGUI():
     tab_control = ttk.Notebook(frame)
     detect_frame= ttk.Frame(tab_control)
     file_frame = ttk.Frame(tab_control)
-    tab_control.add(detect_frame,text='Detect Zone')
-    tab_control.add(file_frame,text='File Zone ')
+    profile_frame = ttk.Frame(tab_control)
+    tab_control.add(profile_frame,text='Client Profile')
+    tab_control.add(detect_frame,text='Detection')
+    tab_control.add(file_frame,text='Single Data Sending')
     tab_control.pack(expand=1,fill="both")
 
-    # Detect Tab widget
+    #Style
     button_style = ttk.Style().configure("def.TButton",font=("Courier",16))
+
+    # Profile Tab Widget
+    #If there a login info created in program
+    if True:
+        label1 = ttk.Label(profile_frame,text="This Device is new !")
+        box_label = ttk.Label(profile_frame,text="Factory Name")
+        box_label2 = ttk.Label(profile_frame,text="Device Name")
+        box_label3 = ttk.Label(profile_frame,text="Password")
+        text_box = ttk.Entry(profile_frame)
+        text_box2 = ttk.Entry(profile_frame)
+        text_box3 = ttk.Entry(profile_frame,show="#")
+        register = ttk.Button(profile_frame,text="Register",command = register_device,style="def.TButton")
+
+
+        label1.config(font=("Courier", 24))
+        box_label.config(font=("Courier", 18))
+        box_label2.config(font=("Courier", 18))
+        box_label3.config(font=("Courier", 18))
+        text_box.config(font=("Courier", 20))
+        text_box2.config(font=("Courier", 20))
+        text_box3.config(font=("Courier", 20))
+
+        label1.pack(pady="20")
+        pro_x = 20
+        pro_y = 100
+        box_label.place(x=pro_x,y=pro_y)
+        pro_y+=40
+        text_box.place(x=pro_x,y=pro_y)
+        pro_y+=50
+        box_label2.place(x=pro_x,y=pro_y)
+        pro_y+=40
+        text_box2.place(x=pro_x,y=pro_y)
+        pro_y+=50
+        box_label3.place(x=pro_x,y=pro_y)
+        pro_y+=40
+        text_box3.place(x=pro_x,y=pro_y)
+        pro_x = 500
+        pro_y = 200
+        register.place(x=pro_x,y=pro_y)
+    else :
+        label1 = ttk.Label(profile_frame,text="This Device is ready !")
+        device = ttk.Label(profile_frame,text="Factory : ...")
+        device2 = ttk.Label(profile_frame,text="Device : ...")
+        device3 = ttk.Label(profile_frame,text="Password Secured !")
+        model = ttk.Button(profile_frame,text="Model",command = get_model,style="def.TButton")
+        send_new = ttk.Button(profile_frame,text="Send Image",command = send_raw_image,style="def.TButton")
+
+        label1.config(font=("Courier", 24))
+        device.config(font=("Courier", 20))
+        device2.config(font=("Courier", 20))
+        device3.config(font=("Courier", 20))
+
+        label1.pack(pady="20")
+        pro_x = 20
+        pro_y = 100
+        device.place(x=pro_x,y=pro_y)
+        pro_y+=50
+        device2.place(x=pro_x,y=pro_y)
+        pro_y+=50
+        device3.place(x=pro_x,y=pro_y)
+        pro_x+=380
+        pro_y=100
+        model.place(x=pro_x,y=pro_y)
+        pro_y+=60
+        send_new.place(x=pro_x,y=pro_y)
+
+    # Detect Tab widget
     label1 = ttk.Label(detect_frame,text="Detect Zone")
     vdo_stream = ttk.Label(detect_frame,image=vdo_slot,borderwidth=5,relief='solid')
     btn1 = ttk.Button(detect_frame,text="Detect",command = mywebcam,style="def.TButton")
@@ -130,8 +199,8 @@ def buildGUI():
 
     label1.pack()
     server_res.pack(pady="10")
-    btn1.pack(pady=10,ipadx="10",ipady="10")
-    btn3.pack(pady=10,ipadx="10",ipady="10")
+    btn1.pack(side=tkinter.LEFT,pady=10,ipadx="10",ipady="10")
+    btn3.pack(side=tkinter.LEFT,pady=10,ipadx="10",ipady="10")
 
     frame.iconphoto(False,icon)
 def cameraYOLO():
@@ -152,7 +221,7 @@ def send_data():
     curl = pycurl.Curl()
     rep = BytesIO()
     #curl.setopt(pycurl.URL,server_path+"/send")
-    curl.setopt(pycurl.URL,server_path+"/api/uploadunknown")
+    curl.setopt(pycurl.URL,server_path+"/api/detect")
     curl.setopt(pycurl.POST,1)
     curl.setopt(pycurl.HTTPPOST,[
         ("image",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.jpg'))),  
@@ -176,6 +245,12 @@ def clearUnknown():
 def collect_data():
     #print("Now Showing new image data to be trained in this model")
     subprocess.call("explorer "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\'), shell=True)
+def register_device():
+    print("Now sending data to save in YOLO-server")
+def get_model():
+    print("Now requesting every models available in YOLO-server")
+def send_raw_image():
+    print("Now sending Raw image to be used to create new model to YOLO-server")
 if __name__ == '__main__':
     buildGUI()
     clearUnknown()

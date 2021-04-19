@@ -62,6 +62,9 @@ This is part of the final project of computer engineering at Thammsart Universit
     - fix server file because why not ? it a part of my job
     - using token is available now
     - need to integrate registration and login into myGUI
+
+    - first implement GUI for login and register . Quick and simple
+    - put black box behind count indicator
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server
