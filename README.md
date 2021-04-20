@@ -65,6 +65,10 @@ This is part of the final project of computer engineering at Thammsart Universit
 
     - first implement GUI for login and register . Quick and simple
     - put black box behind count indicator
+- 20/4/2021
+    - new UI
+    - new function (yet to implement)
+    - new shit to do later...
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server

@@ -1,6 +1,6 @@
 ###############################################
 #                                             #
-# Main Client Program V1.0.2                  #
+# Main Client Program V1.1                    #
 #                                             #
 ############################################### 
 import logging
@@ -39,6 +39,7 @@ obj_count = 0
 last_count = 0
 MODEL_PATH = "./mine/cap_unk.pt"
 server_path = "http://riorocker97.com"
+VERSION = "v1.1"
 ####################
 def insertLog(msg,msgtype):
     global scroll
@@ -84,7 +85,7 @@ def buildGUI():
     global vdo_stream,server_res
     global vdo_slot,pic_slot
     global scroll
-    frame.title('IOT-Project : Client v1.0.2')
+    frame.title('IOT-Project : Client '+VERSION)
     frame.geometry("800x800")
     frame.resizable(width=False, height=False)
     tab_control = ttk.Notebook(frame)
@@ -138,17 +139,29 @@ def buildGUI():
         pro_y = 200
         register.place(x=pro_x,y=pro_y)
     else :
+        # will implement model listing from yolo-server later #
+        all_model = [
+            "Model 1",
+            "Model 2",
+            "Model 3"
+        ]
+        ##########################################
         label1 = ttk.Label(profile_frame,text="This Device is ready !")
         device = ttk.Label(profile_frame,text="Factory : ...")
         device2 = ttk.Label(profile_frame,text="Device : ...")
         device3 = ttk.Label(profile_frame,text="Password Secured !")
-        model = ttk.Button(profile_frame,text="Model",command = get_model,style="def.TButton")
-        send_new = ttk.Button(profile_frame,text="Send Image",command = send_raw_image,style="def.TButton")
+        selected_model = tkinter.StringVar(profile_frame)
+        selected_model.set(all_model[0])
+        model_select = tkinter.OptionMenu(profile_frame,selected_model,*all_model)
+    
+        model_select.config(width="10",font=("Courier",18))
+        #send_new = ttk.Button(profile_frame,text="Send Image",command = send_raw_image,style="def.TButton")
 
         label1.config(font=("Courier", 24))
         device.config(font=("Courier", 20))
         device2.config(font=("Courier", 20))
         device3.config(font=("Courier", 20))
+        model_select.config(width="10",font=("Courier",18))
 
         label1.pack(pady="20")
         pro_x = 20
@@ -160,9 +173,9 @@ def buildGUI():
         device3.place(x=pro_x,y=pro_y)
         pro_x+=380
         pro_y=100
-        model.place(x=pro_x,y=pro_y)
+        model_select.place(x=pro_x,y=pro_y)
         pro_y+=60
-        send_new.place(x=pro_x,y=pro_y)
+        #send_new.place(x=pro_x,y=pro_y)
 
     # Detect Tab widget
     label1 = ttk.Label(detect_frame,text="Detect Zone")
@@ -192,12 +205,42 @@ def buildGUI():
     server_res = ttk.Label(file_frame,image=pic_slot,borderwidth=5,relief='solid')
     btn1 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
     btn3 = ttk.Button(file_frame,text="Send",command=send_data,style="def.TButton")
+    before = ttk.Button(file_frame,text="<",command=left_swipe,style="def.TButton")
+    after = ttk.Button(file_frame,text=">",command=right_swipe,style="def.TButton")
+    label2 = ttk.Label(file_frame,text="Today Count")
+    label3 = ttk.Label(file_frame,text="000")
+    file_scroll = scrolledtext.ScrolledText(file_frame,state='disabled',borderwidth=5,width=55, height=10)
+
+    file_scroll.configure(font=('TkFixedFont',12),background="black")
+    file_scroll.tag_config('info',foreground='#15A0CA')
+    file_scroll.tag_config('warn',foreground='#DE9B00')
+    file_scroll.tag_config('error',foreground='#DA3C15')
+    file_scroll.tag_config('ok',foreground='#00F942')
     label1.config(font=("Courier", 36))
+    label2.config(font=("Courier", 24))
+    label3.config(font=("Courier", 22))
+
+    pro_x = 20
+    pro_y = 80
 
     label1.pack()
-    server_res.pack(pady="10")
-    btn1.pack(side=tkinter.LEFT,pady=10,ipadx="10",ipady="10")
-    btn3.pack(side=tkinter.LEFT,pady=10,ipadx="10",ipady="10")
+    server_res.place(x=pro_x,y=pro_y)
+    pro_x+=550
+    btn1.place(x=pro_x,y=pro_y)
+    pro_y+=50
+    btn3.place(x=pro_x,y=pro_y)
+    pro_y+=70
+    label2.place(x=pro_x,y=pro_y)
+    pro_y+=60
+    label3.place(x=pro_x,y=pro_y)
+    pro_x = 20
+    pro_y = 450
+    before.place(x=pro_x,y=pro_y)
+    pro_x+= 300
+    after.place(x=pro_x,y=pro_y)
+    pro_x-=300
+    pro_y+=80
+    file_scroll.place(x=pro_x,y=pro_y)
 
     frame.iconphoto(False,icon)
 def cameraYOLO():
@@ -244,10 +287,13 @@ def collect_data():
     subprocess.call("explorer "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\'), shell=True)
 def register_device():
     print("Now sending data to save in YOLO-server")
-def get_model():
-    print("Now requesting every models available in YOLO-server")
 def send_raw_image():
     print("Now sending Raw image to be used to create new model to YOLO-server")
+def left_swipe():
+    print("Swiping to left...")
+def right_swipe():
+    print("Swiping to right...")
+
 
 def yolo_client():
     buildGUI()
@@ -258,7 +304,7 @@ def yolo_client():
     else:
         arg = "clear"
     subprocess.run([arg],shell=True)
-    task = threading.Thread(target=cameraYOLO)
-    task.start()
+    #task = threading.Thread(target=cameraYOLO)
+    #task.start()
     task2 = threading.Thread(target=frame.mainloop())
     task2.start()
