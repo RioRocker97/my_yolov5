@@ -1,6 +1,6 @@
 ###############################################
 #                                             #
-# Main Client Program V1.0.1                  #
+# Main Client Program V1.0.2                  #
 #                                             #
 ############################################### 
 import logging
@@ -84,7 +84,7 @@ def buildGUI():
     global vdo_stream,server_res
     global vdo_slot,pic_slot
     global scroll
-    frame.title('IOT-Project : Client v1.0.1')
+    frame.title('IOT-Project : Client v1.0.2')
     frame.geometry("800x800")
     frame.resizable(width=False, height=False)
     tab_control = ttk.Notebook(frame)
