@@ -20,6 +20,11 @@ if __name__ == '__main__':
    os.makedirs('./api_unknown/new') 
    if os.path.exists('./api_unknown/res') :
       shutil.rmtree('./api_unknown/res') 
-   os.makedirs('./api_unknown/res') 
+   os.makedirs('./api_unknown/res')
+
+   if not os.path.exists('./assets/labels'): 
+      os.makedirs('./assets/labels')
+   if not os.path.exists('./assets/texts'): 
+      os.makedirs('./assets/texts')
    
    app.run(debug=True,host='0.0.0.0',port=80)

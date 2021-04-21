@@ -239,6 +239,52 @@ def api_upload_unknown():
          image=img_str
       )
 ###### Unknown Detection ###############
+
+#### Upload Label ###############
+@app.route('/api/working/label', methods=['POST','GET'])
+#@token_required
+def api_upload_label():
+
+   if request.files:
+
+      identify = request.form["identify"]
+      labeledby = request.form["labeledby"]
+      file = request.files["image"] 
+      text = request.files["text"] 
+      image_path = os.getcwd()+"/assets/labels"
+      label_path = os.getcwd()+"/assets/texts"
+      num = len(os.listdir(image_path))+1
+         
+      filename = "labeled_"+str(num)
+      file.save(image_path+filename+".jpg")
+      text.save(image_path+filename+".txt")
+     
+      ids = str(num)
+      label1 = Labeled(ids=ids,filename=filename,imgfile=file,labelfile=text,identify=identify,labeledby=labeledby)
+      label1.save()
+
+      return "Label image have been saved!"
+     
+   else :
+      return "please put a request file."
+#### Upload Label ###############
+
+### Re-train ####################
+@app.route('/api/working/retrain', methods=['get'])
+#@token_required
+def retrain():
+   pass
+   # count = len(Labeled.identify(
+   #    {"identify" : "bottle"}
+   # ))
+  
+   #return count
+
+   # for obj in Labeled:
+   #    count = len(obj['bottle'])
+
+   #return "retrain sessions"
+### Re-train ####################
 """
 @app.route('/api/labeled', methods=['GET','POST'])
 def api_lebeled():
