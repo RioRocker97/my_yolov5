@@ -61,19 +61,21 @@ class Unknown(db.Document):
       }
 class Labeled(db.Document):
    ids = db.StringField()
-   filename = db.StringField()
+   filename = db.StringField(unique=True)
+   imgfile = db.ImageField(thumbnail_size=(256,256))
+   labelfile = db.FileField()
    identify = db.StringField()
-   lebeledBy = db.StringField()
+   labeledby = db.StringField()
 
    def to_json(self):
 
       return {
-
          "ids": self.ids,
          "filename": self.filename,
+         "imgfile" : self.imgfile,
+         "labelfile" : self.labelfile,
          "identify": self.identify,
-         "lebeledBy": self.lebeledBy,
-
+         "labeledby": self.labeledby,
       }
 class Device(db.Document):
    ids = db.StringField(unique=True)
@@ -251,8 +253,8 @@ def api_upload_label():
       labeledby = request.form["labeledby"]
       file = request.files["image"] 
       text = request.files["text"] 
-      image_path = os.getcwd()+"/assets/labels"
-      label_path = os.getcwd()+"/assets/texts"
+      image_path = os.getcwd()+"/assets/labels/"
+      label_path = os.getcwd()+"/assets/texts/"
       num = len(os.listdir(image_path))+1
          
       filename = "labeled_"+str(num)
