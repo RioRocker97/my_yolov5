@@ -162,17 +162,17 @@ def api_register():
 
    data = request.get_json()
    #auth_token = user.encode_auth_token(user.id)
-   if data['aType'] == 'iot':
+   if str(data['aType']) == 'iot':
       hashed = generate_password_hash(data['password'], method='sha256')
       uniqueName = str(data['factory']+"_"+data['aType']+"_"+data['ids']+"_")
 
-      newDevice = Device(ids=data['ids'],username=data['username'],aType=data['aType'],factory=data['factory'],password=hashed,uniqueName=uniqueName)
-      newDevice.save()
+      #newDevice = Device(ids=data['ids'],username=data['username'],aType=data['aType'],factory=data['factory'],password=hashed,uniqueName=uniqueName)
+      #newDevice.save()
 
-      return "Successfully appied! [ioT]"
+      return "Successfully appied! [ioT]\n"
      
 
-   elif data['aType'] == 'mobile' :
+   elif str(data['aType']) == 'mobile' :
 
       newDevice = Device(ids=data['ids'],username="",aType=data['aType'],factory="",password="",uniqueName="")
       newDevice.save()

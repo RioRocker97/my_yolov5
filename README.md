@@ -68,7 +68,10 @@ This is part of the final project of computer engineering at Thammsart Universit
 - 20/4/2021
     - new UI
     - new function (yet to implement)
-    - new shit to do later...
+- 21/4/2021
+    - registration ok
+    - constant unknown data to be sent to YOLO-server ok (poor performance)
+    - will do image "swiping" later
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server

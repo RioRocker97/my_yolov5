@@ -7,10 +7,14 @@ import subprocess
 import shutil
 import os
 from raw_server import app
-
+from platform import system
 if __name__ == '__main__':
 
-   subprocess.call("clear",shell=True)
+   if system() == 'Windows':
+      arg = "cls"
+   else:
+      arg = "clear"
+   subprocess.run([arg],shell=True)
    if os.path.exists('./api_unknown/new') :
       shutil.rmtree('./api_unknown/new') 
    os.makedirs('./api_unknown/new') 

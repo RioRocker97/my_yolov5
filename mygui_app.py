@@ -8,15 +8,15 @@ import threading
 import cv2 
 import subprocess
 import os
-import pycurl
+import pycurl,json
 import time
 import shutil
 import json
 import base64
 import argparse
 import tkinter
-from platform import system
 
+from platform import system
 from tkinter import ttk,scrolledtext
 from PIL import ImageTk,Image 
 from io import BytesIO
@@ -37,9 +37,13 @@ pic_slot = ImageTk.PhotoImage(Image.open("gui_data/overwork.jpg").resize((480,36
 icon = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"))
 obj_count = 0
 last_count = 0
+device = list()
+unknown_res = list()
+get_unknown_now = True
 MODEL_PATH = "./mine/cap_unk.pt"
 server_path = "http://riorocker97.com"
-VERSION = "v1.1"
+#server_path = "127.0.0.1"
+VERSION = "v1.2"
 ####################
 def insertLog(msg,msgtype):
     global scroll
@@ -51,18 +55,20 @@ def mywebcam():
     global isVideoCreated
     if(isVideoCreated):
         insertLog("...Begin detection...","info")
-        live_vdo()
+        vdo = threading.Thread(target=live_vdo)
+        send_unknown_trigger = threading.Thread(target=time_trigger)
+        vdo.start()
+        send_unknown_trigger.start()
     else:
         insertLog("### Camera is not loaded ###","error")
 def vdostop():
     global isVideoStop
-    if(not isVideoStop):
-        isVideoStop = True
-        insertLog("...VDO streaming from camera is stopped...","warn")
-        if(obj_count != 0):
-            insertLog("Found Objects : "+str(obj_count),"ok")
-        else:
-            insertLog("...No Objects Found...","info")
+    isVideoStop = True
+    insertLog("...VDO streaming from camera is stopped...","warn")
+    if(obj_count != 0):
+        insertLog("Found Objects : "+str(obj_count),"ok")
+    else:
+        insertLog("...No Objects Found...","info")
 def live_vdo():
     global isVideoStop,vdo_stream,vdo_slot,obj_count,last_count
     if(not isVideoStop):
@@ -80,11 +86,10 @@ def live_vdo():
         if max_count == 0:
             last_count = 0
 
-        vdo_stream.after(10,live_vdo)
+        vdo_stream.after(1,live_vdo)
 def buildGUI():
-    global vdo_stream,server_res
-    global vdo_slot,pic_slot
-    global scroll
+    global vdo_stream,server_res,vdo_slot,pic_slot,scroll
+    global device
     frame.title('IOT-Project : Client '+VERSION)
     frame.geometry("800x800")
     frame.resizable(width=False, height=False)
@@ -102,15 +107,19 @@ def buildGUI():
 
     # Profile Tab Widget
     #If there a login info created in program
-    if True:
+    if not os.path.isfile(os.getcwd()+"/gui_data/login_info.txt"):
+        device.append(tkinter.StringVar())
+        device.append(tkinter.StringVar())
+        device.append(tkinter.StringVar())
+
         label1 = ttk.Label(profile_frame,text="This Device is new !")
         box_label = ttk.Label(profile_frame,text="Factory Name")
         box_label2 = ttk.Label(profile_frame,text="Device Name")
         box_label3 = ttk.Label(profile_frame,text="Password")
-        text_box = ttk.Entry(profile_frame)
-        text_box2 = ttk.Entry(profile_frame)
-        text_box3 = ttk.Entry(profile_frame,show="#")
-        register = ttk.Button(profile_frame,text="Register",command = register_device,style="def.TButton")
+        text_box = ttk.Entry(profile_frame,textvariable=device[0])
+        text_box2 = ttk.Entry(profile_frame,textvariable=device[1])
+        text_box3 = ttk.Entry(profile_frame,show="#",textvariable=device[2])
+        register = ttk.Button(profile_frame,text="Register",command = thread_register,style="def.TButton")
 
 
         label1.config(font=("Courier", 24))
@@ -140,6 +149,12 @@ def buildGUI():
         register.place(x=pro_x,y=pro_y)
     else :
         # will implement model listing from yolo-server later #
+        login_info = open(os.getcwd()+"/gui_data/login_info.txt","r")
+        temp = login_info.readlines()
+        info = [
+            temp[0].split("\n")[0],
+            temp[1].split("\n")[0],
+        ]
         all_model = [
             "Model 1",
             "Model 2",
@@ -147,8 +162,8 @@ def buildGUI():
         ]
         ##########################################
         label1 = ttk.Label(profile_frame,text="This Device is ready !")
-        device = ttk.Label(profile_frame,text="Factory : ...")
-        device2 = ttk.Label(profile_frame,text="Device : ...")
+        device = ttk.Label(profile_frame,text="Factory : "+info[0])
+        device2 = ttk.Label(profile_frame,text="Device : "+info[1])
         device3 = ttk.Label(profile_frame,text="Password Secured !")
         selected_model = tkinter.StringVar(profile_frame)
         selected_model.set(all_model[0])
@@ -258,17 +273,44 @@ def cameraYOLO():
 def send_data():
     global pic_slot,server_res
     print("Now send unknown data to Server")
+    ##
+    rep = BytesIO()
+    detect_token = ""
+    login_info = open(os.getcwd()+"/gui_data/login_info.txt","r")
+    temp = login_info.readlines()
+    info = [
+        temp[0].split("\n")[1],
+        temp[1].split("\n")[2],
+    ]
+    prep = pycurl.Curl()
+    prep.setopt(pycurl.URL,server_path+"/api/login")
+    prep.setopt(pycurl.HTTPAUTH,pycurl.HTTPAUTH_BASIC)
+    prep.setopt(pycurl.USERNAME,info[0])
+    prep.setopt(pycurl.PASSWORD,info[1])
+    prep.setopt(pycurl.WRITEDATA,rep)
+    t0 = time.time()
+    prep.perform()
+    print("Time used: %.2f" % (time.time()-t0))
+    if(str(prep.getinfo(pycurl.HTTP_CODE)) == '200'):
+        rep_body = json.loads(rep.getvalue())
+        detect_token = rep_body['token']
+    prep.close()
+    ##
+    ##
     curl = pycurl.Curl()
     rep = BytesIO()
-    #curl.setopt(pycurl.URL,server_path+"/send")
     curl.setopt(pycurl.URL,server_path+"/api/detect")
     curl.setopt(pycurl.POST,1)
     curl.setopt(pycurl.HTTPPOST,[
         ("image",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.jpg'))),  
         ])
-    curl.setopt(pycurl.HTTPHEADER,["Content-Type: multipart/form-data"])
+    curl.setopt(pycurl.HTTPHEADER,
+        ["Content-Type: multipart/form-data",
+        "API_TOKEN:"+ detect_token])
     curl.setopt(pycurl.WRITEDATA,rep)
+    t0 = time.time()
     curl.perform()
+    print("Time used: %.2f" % (time.time()-t0))
     if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
         rep_body = json.loads(rep.getvalue())
         buff = BytesIO(base64.b64decode(rep_body['image']))
@@ -276,8 +318,85 @@ def send_data():
         res2 = ImageTk.PhotoImage(image=result)
         pic_slot = res2
         server_res.configure(image=pic_slot)
-
     curl.close()
+    ##
+def detect_unknown_constant():
+    global pic_slot,server_res,unknown_res
+    print("sending unknown data to YOLO-Server")
+    unknown_path = os.getcwd()+"/unknown/new_unknown.jpg"
+    rep = BytesIO()
+    detect_token = ""
+    login_info = open(os.getcwd()+"/gui_data/login_info.txt","r")
+    temp = login_info.readlines()
+    info = [
+        temp[1].split("\n")[0],
+        temp[2].split("\n")[0]
+    ]
+    prep = pycurl.Curl()
+    prep.setopt(pycurl.URL,server_path+"/api/login")
+    prep.setopt(pycurl.HTTPAUTH,pycurl.HTTPAUTH_BASIC)
+    prep.setopt(pycurl.USERNAME,info[0])
+    prep.setopt(pycurl.PASSWORD,info[1])
+    prep.setopt(pycurl.WRITEDATA,rep)
+    t0 = time.time()
+    prep.perform()
+    print("Time used: %.2f" % (time.time()-t0))
+    if(str(prep.getinfo(pycurl.HTTP_CODE)) == '200'):
+        rep_body = json.loads(rep.getvalue())
+        detect_token = rep_body['token']
+    prep.close()
+    ##
+    ##
+    curl = pycurl.Curl()
+    rep = BytesIO()
+    curl.setopt(pycurl.URL,server_path+"/api/detect")
+    curl.setopt(pycurl.POST,1)
+    curl.setopt(pycurl.HTTPPOST,[
+        ("image",(pycurl.FORM_FILE,unknown_path)),  
+        ])
+    curl.setopt(pycurl.HTTPHEADER,
+        ["Content-Type: multipart/form-data",
+        "API_TOKEN:"+ detect_token])
+    curl.setopt(pycurl.WRITEDATA,rep)
+    t0 = time.time()
+    curl.perform()
+    print("Time used: %.2f" % (time.time()-t0))
+    if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
+        rep_body = json.loads(rep.getvalue())
+        unknown_res.append(base64.b64decode(rep_body['image']))
+        #buff = BytesIO(base64.b64decode(rep_body['image']))
+    curl.close()
+    os.remove(unknown_path)
+def time_cooldown():
+    global get_unknown_now 
+    print("unknown found ! Begin to cooldown...")
+    time.sleep(3)
+    get_unknown_now = True
+    print("cooldown over . getting new unknown...")
+def time_trigger():
+    global get_unknown_now,isVideoStop,unknown_res
+    unknown_path = os.getcwd()+"/unknown/new_unknown.jpg"
+    num =0
+    while not isVideoStop:
+        if os.path.exists(unknown_path):
+            send_one = threading.Thread(target=detect_unknown_constant)
+            send_one.start()
+            time_cooldown()
+            num+=1
+        else:
+            print(str(num)+ " unknown not found yet..."+str(len(unknown_res)))
+def switch_trigger():
+    task_t2 = threading.Thread(target=time_trigger)
+    task_t2.start()
+def test_time_trigger():
+    global get_unknown_now
+    while get_unknown_now:
+        print("Puppy",end="")
+        time.sleep(0.5)
+        print(" Puppy",end="")
+        time.sleep(0.5)
+        print(" Puppy",end="\n")
+        time.sleep(0.5)
 def clearUnknown():
     if os.path.exists("./unknown") :
         shutil.rmtree("./unknown")
@@ -285,26 +404,53 @@ def clearUnknown():
 def collect_data():
     #print("Now Showing new image data to be trained in this model")
     subprocess.call("explorer "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\'), shell=True)
+def thread_register():
+    small_task = threading.Thread(target=register_device)
+    small_task.start()
 def register_device():
     print("Now sending data to save in YOLO-server")
+    global device
+
+    data = json.dumps({
+        "ids":"00",
+        "factory":device[0].get(),
+        "username":device[1].get(),
+        "password":device[2].get(),
+        "aType":"iot"
+    })
+    curl = pycurl.Curl()
+    curl.setopt(pycurl.URL,server_path+"/api/register")
+    curl.setopt(pycurl.POST,1)
+    curl.setopt(pycurl.HTTPHEADER, ['Accept: application/json','Content-Type: application/json'])
+    curl.setopt(pycurl.POSTFIELDS, data)
+    print(data)
+    curl.perform()
+    
+    if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
+        print("Registeration Completed ! Saving profile...")
+        login_info = open(os.getcwd()+"/gui_data/login_info.txt","x")
+        login_info.write(device[0].get()+"\n")
+        login_info.write(device[1].get()+"\n")
+        login_info.write(device[2].get()+"\n")
+        login_info.close()
+        print("Writing completed...")
 def send_raw_image():
     print("Now sending Raw image to be used to create new model to YOLO-server")
 def left_swipe():
     print("Swiping to left...")
 def right_swipe():
     print("Swiping to right...")
-
-
 def yolo_client():
-    buildGUI()
-    clearUnknown()
     arg = ""
     if system() == 'Windows':
         arg = "cls"
     else:
         arg = "clear"
     subprocess.run([arg],shell=True)
-    #task = threading.Thread(target=cameraYOLO)
-    #task.start()
+    buildGUI()
+    clearUnknown()
+    task = threading.Thread(target=cameraYOLO)
+    task.start()
     task2 = threading.Thread(target=frame.mainloop())
     task2.start()
+    
