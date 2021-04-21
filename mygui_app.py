@@ -39,11 +39,12 @@ obj_count = 0
 last_count = 0
 device = list()
 unknown_res = list()
+curr_unk = 0
 get_unknown_now = True
 MODEL_PATH = "./mine/cap_unk.pt"
 server_path = "http://riorocker97.com"
 #server_path = "127.0.0.1"
-VERSION = "v1.2"
+VERSION = "v1.2.1"
 ####################
 def insertLog(msg,msgtype):
     global scroll
@@ -62,13 +63,15 @@ def mywebcam():
     else:
         insertLog("### Camera is not loaded ###","error")
 def vdostop():
-    global isVideoStop
+    global isVideoStop,unknown_res,curr_unk
     isVideoStop = True
     insertLog("...VDO streaming from camera is stopped...","warn")
     if(obj_count != 0):
         insertLog("Found Objects : "+str(obj_count),"ok")
+        insertLog("Unknown Found :"+str(len(unknown_res)),"ok")
     else:
         insertLog("...No Objects Found...","info")
+    curr_unk = len(unknown_res)-1
 def live_vdo():
     global isVideoStop,vdo_stream,vdo_slot,obj_count,last_count
     if(not isVideoStop):
@@ -219,7 +222,7 @@ def buildGUI():
     label1 = ttk.Label(file_frame,text="File Zone")
     server_res = ttk.Label(file_frame,image=pic_slot,borderwidth=5,relief='solid')
     btn1 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
-    btn3 = ttk.Button(file_frame,text="Send",command=send_data,style="def.TButton")
+    btn3 = ttk.Button(file_frame,text="Single Send",style="def.TButton")
     before = ttk.Button(file_frame,text="<",command=left_swipe,style="def.TButton")
     after = ttk.Button(file_frame,text=">",command=right_swipe,style="def.TButton")
     label2 = ttk.Label(file_frame,text="Today Count")
@@ -437,9 +440,31 @@ def register_device():
 def send_raw_image():
     print("Now sending Raw image to be used to create new model to YOLO-server")
 def left_swipe():
+    global unknown_res,curr_unk,pic_slot
     print("Swiping to left...")
+
+    if(curr_unk==0):
+        curr_unk=0
+    else:
+        curr_unk-=1
+    buff = BytesIO(unknown_res[curr_unk])
+    result = Image.open(buff).resize((480,360))
+    res2 = ImageTk.PhotoImage(image=result)
+    pic_slot = res2
+    server_res.configure(image=pic_slot)
 def right_swipe():
-    print("Swiping to right...")
+    global unknown_res,curr_unk,pic_slot
+    print("Swiping to Right...")
+
+    if(curr_unk==len(unknown_res)-1):
+        curr_unk=len(unknown_res)-1
+    else:
+        curr_unk+=1
+    buff = BytesIO(unknown_res[curr_unk])
+    result = Image.open(buff).resize((480,360))
+    res2 = ImageTk.PhotoImage(image=result)
+    pic_slot = res2
+    server_res.configure(image=pic_slot)
 def yolo_client():
     arg = ""
     if system() == 'Windows':
