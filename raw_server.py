@@ -28,7 +28,7 @@ DB_URI = "mongodb+srv://ikanaporn:{}@cluster0.x8seg.mongodb.net/{}?retryWrites=t
     mongodb_password, database_name
 )
 FOLDER_IMAGE_UPLOADS = "/Users/mai/SeniorProject/flaskwebapi/env/assets/images"
-SINGLE_MODEL_TEST = "./mine/yolov5s.pt"
+SINGLE_MODEL_TEST = "./mine/pen_only.pt"
 app.config['SECRET_KEY']='Th1s1ss3cr3t'
 app.config["MONGODB_HOST"] = DB_URI
 app.config["IMAGE_UPLOADS"] = FOLDER_IMAGE_UPLOADS
@@ -165,7 +165,7 @@ def api_register():
    data = request.get_json()
    #auth_token = user.encode_auth_token(user.id)
    if str(data['aType']) == 'iot':
-      new_id = int(client.get_database('API-Detection').get_collection('device').count())+1
+      new_id = str(int(client.get_database('API-Detection').get_collection('device').count())+1)
       hashed = generate_password_hash(data['password'], method='sha256')
       uniqueName = str(data['factory']+"_"+data['aType']+"_"+new_id)
 
