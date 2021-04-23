@@ -373,7 +373,7 @@ def detect_unknown_constant():
 def time_cooldown():
     global get_unknown_now 
     print("unknown found ! Begin to cooldown...")
-    time.sleep(3)
+    time.sleep(10)
     get_unknown_now = True
     print("cooldown over . getting new unknown...")
 def time_trigger():
@@ -381,13 +381,14 @@ def time_trigger():
     unknown_path = os.getcwd()+"/unknown/new_unknown.jpg"
     num =0
     while not isVideoStop:
-        if os.path.exists(unknown_path):
+        if os.path.exists(unknown_path) and get_unknown_now:
+            get_unknown_now = False
             send_one = threading.Thread(target=detect_unknown_constant)
             send_one.start()
             time_cooldown()
             num+=1
-        else:
-            print(str(num)+ " unknown not found yet..."+str(len(unknown_res)))
+        #else:
+        #    print(str(num)+ " unknown not found yet..."+str(len(unknown_res)))
 def switch_trigger():
     task_t2 = threading.Thread(target=time_trigger)
     task_t2.start()
@@ -441,7 +442,7 @@ def send_raw_image():
     print("Now sending Raw image to be used to create new model to YOLO-server")
 def left_swipe():
     global unknown_res,curr_unk,pic_slot
-    print("Swiping to left...")
+    #print("Swiping to left...")
 
     if(curr_unk==0):
         curr_unk=0
@@ -454,7 +455,7 @@ def left_swipe():
     server_res.configure(image=pic_slot)
 def right_swipe():
     global unknown_res,curr_unk,pic_slot
-    print("Swiping to Right...")
+    #print("Swiping to Right...")
 
     if(curr_unk==len(unknown_res)-1):
         curr_unk=len(unknown_res)-1

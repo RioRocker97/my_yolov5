@@ -246,8 +246,7 @@ fabric.properties
 
 # My Ignore
 /pytorch
-!gui_data/*.jpg
-!gui_data/*.png
+/gui_data
 /myenv
 /unknown
 /.vscode

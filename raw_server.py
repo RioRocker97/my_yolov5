@@ -28,7 +28,7 @@ DB_URI = "mongodb+srv://ikanaporn:{}@cluster0.x8seg.mongodb.net/{}?retryWrites=t
     mongodb_password, database_name
 )
 FOLDER_IMAGE_UPLOADS = "/Users/mai/SeniorProject/flaskwebapi/env/assets/images"
-
+SINGLE_MODEL_TEST = "./mine/yolov5s.pt"
 app.config['SECRET_KEY']='Th1s1ss3cr3t'
 app.config["MONGODB_HOST"] = DB_URI
 app.config["IMAGE_UPLOADS"] = FOLDER_IMAGE_UPLOADS
@@ -148,7 +148,7 @@ def token_required(f):
 ##### Basic Routing ######
 @app.route('/',methods=['GET'])
 def hello():
-   return "Hello, THIS IS YOLO-server V1.0"
+   return "Hello, THIS IS YOLO-server V1.1 "
 @app.route('/api/test/unprotected')
 def unprotected():
    return jsonify({'message':'Anyone can view this!'})
@@ -165,11 +165,12 @@ def api_register():
    data = request.get_json()
    #auth_token = user.encode_auth_token(user.id)
    if str(data['aType']) == 'iot':
+      new_id = int(client.get_database('API-Detection').get_collection('device').count())+1
       hashed = generate_password_hash(data['password'], method='sha256')
-      uniqueName = str(data['factory']+"_"+data['aType']+"_"+data['ids']+"_")
+      uniqueName = str(data['factory']+"_"+data['aType']+"_"+new_id)
 
-      #newDevice = Device(ids=data['ids'],username=data['username'],aType=data['aType'],factory=data['factory'],password=hashed,uniqueName=uniqueName)
-      #newDevice.save()
+      newDevice = Device(ids=new_id,username=data['username'],aType=data['aType'],factory=data['factory'],password=hashed,uniqueName=uniqueName)
+      newDevice.save()
 
       return "Successfully appied! [ioT]\n"
      
@@ -222,7 +223,7 @@ def api_upload_unknown():
       print(file)
       
       t0 = time.time()
-      prepareYolo("./mine/yolov5s.pt",True,save_path+"new/"+filename+".jpg")
+      prepareYolo(SINGLE_MODEL_TEST,True,save_path+"new/"+filename+".jpg")
       _,res = runYolo(0)
       image = cv2.cvtColor(res,cv2.COLOR_BGR2RGB)
       image2 = Image.fromarray(image).resize((480,360))
