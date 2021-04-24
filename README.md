@@ -77,9 +77,13 @@ This is part of the final project of computer engineering at Thammsart Universit
     - waiting for model downloading from YOLO-server when it finished
     - daily count is possible 
     - not sure how to collect new image to be re-train tho..
+
+    - prototyping "collect new image" feature . not sure if it working correctly...
+    - new folder path defined again.
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server
+- BASE_DIR\unknown\raw : for saving raw image to be sent to server
 - BASE_DIR\gui_data : for saving file to be used in building GUI
 - BASE_DIR\mine : for saving local model file
 

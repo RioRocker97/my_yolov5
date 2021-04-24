@@ -27,6 +27,7 @@ frame = tkinter.Tk()
 vdo_stream = ttk.Label()
 server_res = ttk.Label()
 scroll = scrolledtext.ScrolledText()
+file_scroll = scrolledtext.ScrolledText()
 ###################
 
 ## Global ###################
@@ -36,17 +37,27 @@ isVideoStop = False
 vdo_slot = ImageTk.PhotoImage(Image.open("gui_data/goose.png").resize((480,360)))
 pic_slot = ImageTk.PhotoImage(Image.open("gui_data/overwork.jpg").resize((480,360)))
 icon = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"))
+file_icon = [
+    ImageTk.PhotoImage(Image.open("gui_data/folder.png").resize((64,64))),
+    ImageTk.PhotoImage(Image.open("gui_data/view_mode.png").resize((32,32))),
+    ImageTk.PhotoImage(Image.open("gui_data/capture_mode.png").resize((32,32))),
+    ImageTk.PhotoImage(Image.open("gui_data/cap.png").resize((64,64)))
+]
+file_btn =[]
 obj_count = 0
 last_count = 0
 device = list()
 unknown_res = list()
 curr_unk = 0
 get_unknown_now = True
+view_mode = False
+capture_mode = False
 MODEL_PATH = "./mine/cap_unk.pt"
 server_path = "http://riorocker97.com"
 #server_path = "127.0.0.1"
-VERSION = "v1.3"
+VERSION = "v1.4"
 selected_model = tkinter.StringVar()
+selected_raw_image = Image.new(mode="RGB",size=(480,360))
 ####################
 def insertLog(msg,msgtype):
     global scroll
@@ -54,6 +65,12 @@ def insertLog(msg,msgtype):
     scroll.insert(tkinter.END,msg + '\n',msgtype)
     scroll.configure(state='disabled')
     scroll.yview(tkinter.END)
+def file_insertLog(msg,msgtype):
+    global file_scroll
+    file_scroll.configure(state='normal')
+    file_scroll.insert(tkinter.END,msg + '\n',msgtype)
+    file_scroll.configure(state='disabled')
+    file_scroll.yview(tkinter.END)
 def mywebcam():
     global isVideoCreated
     if(isVideoCreated):
@@ -104,9 +121,28 @@ def live_vdo():
             last_count = 0
 
         vdo_stream.after(1,live_vdo)
+def file_live_vdo(frame):
+    global capture_mode,server_res,pic_slot,selected_raw_image
+    if capture_mode:
+
+        imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+        imageVDO2 = Image.fromarray(imageVDO).resize((480,360))
+        imageVDO3 = ImageTk.PhotoImage(image=imageVDO2)
+        pic_slot = imageVDO3
+        selected_raw_image = imageVDO2
+        server_res.configure(image=pic_slot)
+def file_capture_vdo():
+    global pic_slot,capture_mode
+    cap_cam = cv2.VideoCapture(0)
+    while True:
+        _,frame = cap_cam.read()
+        cv2.waitKey(1)
+        file_live_vdo(frame)
+        if not capture_mode:
+            break
 def buildGUI():
-    global vdo_stream,server_res,vdo_slot,pic_slot,scroll
-    global device,selected_model
+    global vdo_stream,server_res,vdo_slot,pic_slot,scroll,file_scroll,MODEL_PATH
+    global device,selected_model,file_btn
     count_path = os.getcwd()+"/gui_data/count_info.txt"
     model_log_path = os.getcwd()+"/gui_data/model_info.txt"
     model_path = os.getcwd()+"/mine/"
@@ -254,9 +290,11 @@ def buildGUI():
     #vdo_slot2 =vdo_slot
     label1 = ttk.Label(file_frame,text="File Zone")
     server_res = ttk.Label(file_frame,image=pic_slot,borderwidth=5,relief='solid')
-    btn1 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
-    btn2 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
+    btn1 = ttk.Button(file_frame,image=file_icon[0],command=collect_data,style="def.TButton")
+    btn2 = ttk.Button(file_frame,image=file_icon[1],command=swapFileMode,style="def.TButton")
+    btn3 = ttk.Button(file_frame,image=file_icon[2],command=swapFileMode2,style="def.TButton")
     before = ttk.Button(file_frame,text="<",command=left_swipe,style="def.TButton")
+    cap = ttk.Button(file_frame,image=file_icon[3],command=cap_one,style="def.TButton")
     after = ttk.Button(file_frame,text=">",command=right_swipe,style="def.TButton")
     label2 = ttk.Label(file_frame,text="Today Count")
     label3 = ttk.Label(file_frame,text=str(total_count))
@@ -276,8 +314,13 @@ def buildGUI():
 
     label1.pack()
     server_res.place(x=pro_x,y=pro_y)
-    pro_x+=550
+    pro_x+=600
     btn1.place(x=pro_x,y=pro_y)
+    pro_y+=80
+    btn2.place(x=pro_x,y=pro_y)
+    pro_x+=50
+    btn3.place(x=pro_x,y=pro_y)
+    pro_x-=100
     pro_y+=70
     label2.place(x=pro_x,y=pro_y)
     pro_y+=60
@@ -285,13 +328,58 @@ def buildGUI():
     pro_x = 20
     pro_y = 450
     before.place(x=pro_x,y=pro_y)
-    pro_x+= 300
+    pro_x+= 200
+    cap.place(x=pro_x,y=pro_y)
+    pro_x+= 100
     after.place(x=pro_x,y=pro_y)
     pro_x-=300
     pro_y+=80
     file_scroll.place(x=pro_x,y=pro_y)
 
+    file_btn.append(btn2)
+    file_btn.append(btn3)
+    file_btn.append(cap)
+    
     frame.iconphoto(False,icon)
+def swapFileMode():
+    global view_mode,file_btn,curr_unk
+    view_mode = not view_mode
+    if view_mode:
+        file_insertLog("/////// VIEW MODE //////","info")
+        file_insertLog("There are "+str(curr_unk)+" unknown images result from YOLO-server","ok")
+        file_btn[0].config(state=tkinter.NORMAL)
+        file_btn[1].config(state=tkinter.DISABLED)
+        file_btn[2].config(state=tkinter.DISABLED)
+    else:
+        file_insertLog("/////// VIEW MODE END //////","info")
+        file_btn[0].config(state=tkinter.NORMAL)
+        file_btn[1].config(state=tkinter.NORMAL)
+        file_btn[2].config(state=tkinter.NORMAL)
+def swapFileMode2():
+    global capture_mode,file_btn,file_scroll
+    capture_mode = not capture_mode
+    if capture_mode:
+        file_insertLog("/////// CAPTURE MODE //////","info")
+        file_btn[0].config(state=tkinter.DISABLED)
+        file_btn[1].config(state=tkinter.NORMAL)
+        file_btn[2].config(state=tkinter.NORMAL)
+
+        small_task = threading.Thread(target=file_capture_vdo)
+        small_task.start()
+    else:
+        file_insertLog("/////// CAPTURE MODE END //////","info")
+        file_btn[0].config(state=tkinter.NORMAL)
+        file_btn[1].config(state=tkinter.NORMAL)
+        file_btn[2].config(state=tkinter.NORMAL)
+def cap_one():
+    global selected_raw_image
+    save_path = os.getcwd()+"\\unknown\\raw\\"
+    num = len(os.listdir(save_path))+1
+    selected_raw_image.save(save_path+"something"+str(num)+".jpg")
+    file_insertLog("New raw image saved ! (%s/50)" % str(num),"ok")
+    if num>=50 :
+        file_insertLog("There enough raw images to be used.","warn")
+        file_insertLog("You can exit the mode now !","warn")
 def get_model(*args):
     global selected_model,isVideoCreated
     model_log_path = os.getcwd()+"/gui_data/model_info.txt"
@@ -398,6 +486,9 @@ def clearUnknown():
     if os.path.exists("./unknown") :
         shutil.rmtree("./unknown")
     os.makedirs("./unknown")
+    if os.path.exists("./unknown/raw") :
+        shutil.rmtree("./unknown/raw")
+    os.makedirs("./unknown/raw")
 def collect_data():
     #print("Now Showing new image data to be trained in this model")
     subprocess.call("explorer "+os.path.join(os.path.abspath(os.getcwd()),'unknown\\'), shell=True)
