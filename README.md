@@ -72,10 +72,16 @@ This is part of the final project of computer engineering at Thammsart Universit
     - registration ok
     - constant unknown data to be sent to YOLO-server ok (poor performance)
     - will do image "swiping" later
+- 24/4/2021
+    - can swap model now
+    - waiting for model downloading from YOLO-server when it finished
+    - daily count is possible 
+    - not sure how to collect new image to be re-train tho..
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server
 - BASE_DIR\gui_data : for saving file to be used in building GUI
+- BASE_DIR\mine : for saving local model file
 
 ## Result
 <img src="https://i.imgur.com/NRknPKA.jpg" width="50%" style="padding-left:200px;">

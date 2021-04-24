@@ -18,6 +18,7 @@ import tkinter
 
 from platform import system
 from tkinter import ttk,scrolledtext
+from tkinter import messagebox as mb
 from PIL import ImageTk,Image 
 from io import BytesIO
 from mygui_detect import prepareYolo,runYolo
@@ -44,7 +45,8 @@ get_unknown_now = True
 MODEL_PATH = "./mine/cap_unk.pt"
 server_path = "http://riorocker97.com"
 #server_path = "127.0.0.1"
-VERSION = "v1.2.1"
+VERSION = "v1.3"
+selected_model = tkinter.StringVar()
 ####################
 def insertLog(msg,msgtype):
     global scroll
@@ -65,12 +67,24 @@ def mywebcam():
 def vdostop():
     global isVideoStop,unknown_res,curr_unk
     isVideoStop = True
+    count_path = os.getcwd()+"/gui_data/count_info.txt"
     insertLog("...VDO streaming from camera is stopped...","warn")
     if(obj_count != 0):
         insertLog("Found Objects : "+str(obj_count),"ok")
-        insertLog("Unknown Found :"+str(len(unknown_res)),"ok")
+        if not os.path.exists(count_path):
+            count_log = open(count_path,"w")
+            count_log.write(str(obj_count))
+            count_log.close()
+        else:
+            count_log = open(count_path,"r")
+            temp =int(count_log.read())
+            count_log.close()
+            new_count_log = open(count_path,"w")
+            new_count_log.write(str(obj_count+temp))
+            new_count_log.close()
     else:
         insertLog("...No Objects Found...","info")
+    insertLog("Unknown Found :"+str(len(unknown_res)),"ok")
     curr_unk = len(unknown_res)-1
 def live_vdo():
     global isVideoStop,vdo_stream,vdo_slot,obj_count,last_count
@@ -92,7 +106,15 @@ def live_vdo():
         vdo_stream.after(1,live_vdo)
 def buildGUI():
     global vdo_stream,server_res,vdo_slot,pic_slot,scroll
-    global device
+    global device,selected_model
+    count_path = os.getcwd()+"/gui_data/count_info.txt"
+    model_log_path = os.getcwd()+"/gui_data/model_info.txt"
+    model_path = os.getcwd()+"/mine/"
+    total_count = 0
+    if os.path.exists(count_path) :
+        count_log = open(count_path)
+        total_count = int(count_log.read())
+
     frame.title('IOT-Project : Client '+VERSION)
     frame.geometry("800x800")
     frame.resizable(width=False, height=False)
@@ -158,28 +180,39 @@ def buildGUI():
             temp[0].split("\n")[0],
             temp[1].split("\n")[0],
         ]
-        all_model = [
-            "Model 1",
-            "Model 2",
-            "Model 3"
-        ]
-        ##########################################
+        all_model = []
+        ### get local model list ####
+        for model_file in os.listdir(model_path):
+            if(model_file.split('.')[1] == 'pt'):
+                all_model.append(model_file.split('.')[0])
+        ### get local model list ####
+        ### get server model list ####
+        ### get server model list ####
         label1 = ttk.Label(profile_frame,text="This Device is ready !")
         device = ttk.Label(profile_frame,text="Factory : "+info[0])
         device2 = ttk.Label(profile_frame,text="Device : "+info[1])
         device3 = ttk.Label(profile_frame,text="Password Secured !")
         selected_model = tkinter.StringVar(profile_frame)
-        selected_model.set(all_model[0])
+        selected_model.set("cap_unk")
+        ## get seletec model from file if exist ###
+        if os.path.exists(model_log_path) :
+            model_log = open(model_log_path)
+            temp = model_log.read()
+            selected_model.set(temp)
+            MODEL_PATH = './mine/'+temp+'.pt'
+            print("Now preparing "+MODEL_PATH)
+            model_log.close()
+        ## get seletec model from file if exist ###
+        selected_model.trace('w',get_model)
         model_select = tkinter.OptionMenu(profile_frame,selected_model,*all_model)
     
-        model_select.config(width="10",font=("Courier",18))
+        model_select.configure(width="15",font=("Courier",18))
         #send_new = ttk.Button(profile_frame,text="Send Image",command = send_raw_image,style="def.TButton")
 
         label1.config(font=("Courier", 24))
         device.config(font=("Courier", 20))
         device2.config(font=("Courier", 20))
         device3.config(font=("Courier", 20))
-        model_select.config(width="10",font=("Courier",18))
 
         label1.pack(pady="20")
         pro_x = 20
@@ -222,11 +255,11 @@ def buildGUI():
     label1 = ttk.Label(file_frame,text="File Zone")
     server_res = ttk.Label(file_frame,image=pic_slot,borderwidth=5,relief='solid')
     btn1 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
-    btn3 = ttk.Button(file_frame,text="Single Send",style="def.TButton")
+    btn2 = ttk.Button(file_frame,text="Open",command=collect_data,style="def.TButton")
     before = ttk.Button(file_frame,text="<",command=left_swipe,style="def.TButton")
     after = ttk.Button(file_frame,text=">",command=right_swipe,style="def.TButton")
     label2 = ttk.Label(file_frame,text="Today Count")
-    label3 = ttk.Label(file_frame,text="000")
+    label3 = ttk.Label(file_frame,text=str(total_count))
     file_scroll = scrolledtext.ScrolledText(file_frame,state='disabled',borderwidth=5,width=55, height=10)
 
     file_scroll.configure(font=('TkFixedFont',12),background="black")
@@ -245,8 +278,6 @@ def buildGUI():
     server_res.place(x=pro_x,y=pro_y)
     pro_x+=550
     btn1.place(x=pro_x,y=pro_y)
-    pro_y+=50
-    btn3.place(x=pro_x,y=pro_y)
     pro_y+=70
     label2.place(x=pro_x,y=pro_y)
     pro_y+=60
@@ -261,6 +292,18 @@ def buildGUI():
     file_scroll.place(x=pro_x,y=pro_y)
 
     frame.iconphoto(False,icon)
+def get_model(*args):
+    global selected_model,isVideoCreated
+    model_log_path = os.getcwd()+"/gui_data/model_info.txt"
+    print("selecting a new model : "+selected_model.get())
+    isVideoCreated = False
+    MODEL_PATH = "./mine/"+selected_model.get()+".pt"
+    model_log = open(model_log_path,'w')
+    model_log.write(selected_model.get())
+    model_log.close()
+    mb.showinfo("New Model Selected !!!","Please close this program to take effect.")
+    #task = threading.Thread(target=cameraYOLO)
+    #task.start()
 def cameraYOLO():
     global isVideoCreated
     start = time.time()
@@ -273,56 +316,6 @@ def cameraYOLO():
     else:
         insertLog("Time used : (%.2fs)" % (time.time()-start) ,"ok")
         isVideoCreated = True
-def send_data():
-    global pic_slot,server_res
-    print("Now send unknown data to Server")
-    ##
-    rep = BytesIO()
-    detect_token = ""
-    login_info = open(os.getcwd()+"/gui_data/login_info.txt","r")
-    temp = login_info.readlines()
-    info = [
-        temp[0].split("\n")[1],
-        temp[1].split("\n")[2],
-    ]
-    prep = pycurl.Curl()
-    prep.setopt(pycurl.URL,server_path+"/api/login")
-    prep.setopt(pycurl.HTTPAUTH,pycurl.HTTPAUTH_BASIC)
-    prep.setopt(pycurl.USERNAME,info[0])
-    prep.setopt(pycurl.PASSWORD,info[1])
-    prep.setopt(pycurl.WRITEDATA,rep)
-    t0 = time.time()
-    prep.perform()
-    print("Time used: %.2f" % (time.time()-t0))
-    if(str(prep.getinfo(pycurl.HTTP_CODE)) == '200'):
-        rep_body = json.loads(rep.getvalue())
-        detect_token = rep_body['token']
-    prep.close()
-    ##
-    ##
-    curl = pycurl.Curl()
-    rep = BytesIO()
-    curl.setopt(pycurl.URL,server_path+"/api/detect")
-    curl.setopt(pycurl.POST,1)
-    curl.setopt(pycurl.HTTPPOST,[
-        ("image",(pycurl.FORM_FILE,os.path.join(os.getcwd(),'unknown\\new_unknown.jpg'))),  
-        ])
-    curl.setopt(pycurl.HTTPHEADER,
-        ["Content-Type: multipart/form-data",
-        "API_TOKEN:"+ detect_token])
-    curl.setopt(pycurl.WRITEDATA,rep)
-    t0 = time.time()
-    curl.perform()
-    print("Time used: %.2f" % (time.time()-t0))
-    if(str(curl.getinfo(pycurl.HTTP_CODE)) == '200'):
-        rep_body = json.loads(rep.getvalue())
-        buff = BytesIO(base64.b64decode(rep_body['image']))
-        result = Image.open(buff).resize((480,360))
-        res2 = ImageTk.PhotoImage(image=result)
-        pic_slot = res2
-        server_res.configure(image=pic_slot)
-    curl.close()
-    ##
 def detect_unknown_constant():
     global pic_slot,server_res,unknown_res
     print("sending unknown data to YOLO-Server")
@@ -422,6 +415,7 @@ def register_device():
         "password":device[2].get(),
         "aType":"iot"
     })
+    
     curl = pycurl.Curl()
     curl.setopt(pycurl.URL,server_path+"/api/register")
     curl.setopt(pycurl.POST,1)
@@ -438,6 +432,7 @@ def register_device():
         login_info.write(device[2].get()+"\n")
         login_info.close()
         print("Writing completed...")
+        mb.showinfo(title="Registeration",message="Please close a program to complete registeration.")
 def send_raw_image():
     print("Now sending Raw image to be used to create new model to YOLO-server")
 def left_swipe():
