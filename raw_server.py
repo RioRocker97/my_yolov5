@@ -309,12 +309,9 @@ def retrain():
 @app.route('/api/listModel',methods=['GET'])
 @token_required
 def listModel():
-   modela = [
-      'SER_model_1',
-      'SER_model_2',
-      'SER_model_3',
-      'SER_model_4',
-   ]
+   modela = []
+   for file in os.listdir(os.getcwd()+"/api_unknown/model/"):
+      modela.append(file.split('.')[0])
    return jsonify({'RES': modela})
 ####### list model in mongoDB ########################
 ####### get  model in mongoDB ########################
