@@ -26,5 +26,8 @@ if __name__ == '__main__':
       os.makedirs('./assets/labels')
    if not os.path.exists('./assets/texts'): 
       os.makedirs('./assets/texts')
+   if not os.path.exists('./api_unknown/model'): 
+      os.makedirs('./api_unknown/model')
+
    
    app.run(debug=True,host='0.0.0.0',port=80)

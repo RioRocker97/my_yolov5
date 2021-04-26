@@ -80,6 +80,10 @@ This is part of the final project of computer engineering at Thammsart Universit
 
     - prototyping "collect new image" feature . not sure if it working correctly...
     - new folder path defined again.
+- 26/4/2021
+    - can swap model (from server) now
+    - can send 50 image for re-training
+    - what do now ?
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server

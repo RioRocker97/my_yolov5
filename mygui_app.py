@@ -41,7 +41,8 @@ file_icon = [
     ImageTk.PhotoImage(Image.open("gui_data/folder.png").resize((64,64))),
     ImageTk.PhotoImage(Image.open("gui_data/view_mode.png").resize((32,32))),
     ImageTk.PhotoImage(Image.open("gui_data/capture_mode.png").resize((32,32))),
-    ImageTk.PhotoImage(Image.open("gui_data/cap.png").resize((64,64)))
+    ImageTk.PhotoImage(Image.open("gui_data/cap.png").resize((64,64))),
+    ImageTk.PhotoImage(Image.open("gui_data/upload.png").resize((64,64)))
 ]
 file_btn =[]
 obj_count = 0
@@ -53,11 +54,12 @@ get_unknown_now = True
 view_mode = False
 capture_mode = False
 MODEL_PATH = "./mine/cap_unk.pt"
-server_path = "http://riorocker97.com"
-#server_path = "127.0.0.1"
-VERSION = "v1.4"
+#server_path = "http://riorocker97.com"
+server_path = "127.0.0.1"
+VERSION = "v1.5.1"
 selected_model = tkinter.StringVar()
 selected_raw_image = Image.new(mode="RGB",size=(480,360))
+ser_model_start_at = 0
 ####################
 def insertLog(msg,msgtype):
     global scroll
@@ -142,7 +144,7 @@ def file_capture_vdo():
             break
 def buildGUI():
     global vdo_stream,server_res,vdo_slot,pic_slot,scroll,file_scroll,MODEL_PATH
-    global device,selected_model,file_btn
+    global device,selected_model,file_btn,ser_model_start_at
     count_path = os.getcwd()+"/gui_data/count_info.txt"
     model_log_path = os.getcwd()+"/gui_data/model_info.txt"
     model_path = os.getcwd()+"/mine/"
@@ -218,11 +220,16 @@ def buildGUI():
         ]
         all_model = []
         ### get local model list ####
+        all_model.append("/// LOCAL ///")
         for model_file in os.listdir(model_path):
             if(model_file.split('.')[1] == 'pt'):
                 all_model.append(model_file.split('.')[0])
         ### get local model list ####
         ### get server model list ####
+        all_model.append("/// SERVER ///")
+        ser_model_start_at = len(all_model)
+        all_model = listServerModel(all_model)
+        print("Server Model start at : %i" % ser_model_start_at)
         ### get server model list ####
         label1 = ttk.Label(profile_frame,text="This Device is ready !")
         device = ttk.Label(profile_frame,text="Factory : "+info[0])
@@ -295,6 +302,7 @@ def buildGUI():
     btn3 = ttk.Button(file_frame,image=file_icon[2],command=swapFileMode2,style="def.TButton")
     before = ttk.Button(file_frame,text="<",command=left_swipe,style="def.TButton")
     cap = ttk.Button(file_frame,image=file_icon[3],command=cap_one,style="def.TButton")
+    upload = ttk.Button(file_frame,image=file_icon[4],command=send50raw,style="def.TButton",state='disabled')
     after = ttk.Button(file_frame,text=">",command=right_swipe,style="def.TButton")
     label2 = ttk.Label(file_frame,text="Today Count")
     label3 = ttk.Label(file_frame,text=str(total_count))
@@ -332,15 +340,56 @@ def buildGUI():
     cap.place(x=pro_x,y=pro_y)
     pro_x+= 100
     after.place(x=pro_x,y=pro_y)
-    pro_x-=300
+    pro_x+= 200
+    upload.place(x=pro_x,y=pro_y)
+    pro_x-=500
     pro_y+=80
     file_scroll.place(x=pro_x,y=pro_y)
 
     file_btn.append(btn2)
     file_btn.append(btn3)
     file_btn.append(cap)
-    
+    file_btn.append(upload)
+
     frame.iconphoto(False,icon)
+def listServerModel(all_model):
+
+    rep = BytesIO()
+    detect_token = ""
+    login_info = open(os.getcwd()+"/gui_data/login_info.txt","r")
+    temp = login_info.readlines()
+    info = [
+        temp[1].split("\n")[0],
+        temp[2].split("\n")[0]
+    ]
+    prep = pycurl.Curl()
+    prep.setopt(pycurl.URL,server_path+"/api/login")
+    prep.setopt(pycurl.HTTPAUTH,pycurl.HTTPAUTH_BASIC)
+    prep.setopt(pycurl.USERNAME,info[0])
+    prep.setopt(pycurl.PASSWORD,info[1])
+    prep.setopt(pycurl.WRITEDATA,rep)
+    t0 = time.time()
+    prep.perform()
+    print("Time used: %.2f" % (time.time()-t0))
+    if(str(prep.getinfo(pycurl.HTTP_CODE)) == '200'):
+        rep_body = json.loads(rep.getvalue())
+        detect_token = rep_body['token']
+    prep.close()
+
+    get_model = pycurl.Curl()
+    rep = BytesIO()
+    get_model.setopt(pycurl.URL,server_path+"/api/listModel")
+    get_model.setopt(pycurl.WRITEDATA,rep)
+    get_model.setopt(pycurl.HTTPHEADER,
+        ["API_TOKEN:"+ detect_token])
+    get_model.perform()
+    if(str(get_model.getinfo(pycurl.HTTP_CODE)) == '200'):
+        rep_body = json.loads(rep.getvalue())
+        ser_model = rep_body['RES']
+        for i in ser_model:
+            all_model.append(i)
+    
+    return all_model
 def swapFileMode():
     global view_mode,file_btn,curr_unk
     view_mode = not view_mode
@@ -372,26 +421,123 @@ def swapFileMode2():
         file_btn[1].config(state=tkinter.NORMAL)
         file_btn[2].config(state=tkinter.NORMAL)
 def cap_one():
-    global selected_raw_image
+    global selected_raw_image,file_btn
     save_path = os.getcwd()+"\\unknown\\raw\\"
     num = len(os.listdir(save_path))+1
     selected_raw_image.save(save_path+"something"+str(num)+".jpg")
     file_insertLog("New raw image saved ! (%s/50)" % str(num),"ok")
     if num>=50 :
+        file_btn[3].config(state=tkinter.NORMAL)
         file_insertLog("There enough raw images to be used.","warn")
         file_insertLog("You can exit the mode now !","warn")
 def get_model(*args):
-    global selected_model,isVideoCreated
-    model_log_path = os.getcwd()+"/gui_data/model_info.txt"
-    print("selecting a new model : "+selected_model.get())
-    isVideoCreated = False
-    MODEL_PATH = "./mine/"+selected_model.get()+".pt"
-    model_log = open(model_log_path,'w')
-    model_log.write(selected_model.get())
-    model_log.close()
-    mb.showinfo("New Model Selected !!!","Please close this program to take effect.")
+    global selected_model
+    model_path = os.getcwd()+"/mine/"
+    if selected_model.get() != "/// LOCAL ///" and selected_model.get() != "/// SERVER ///"  :
+        model_log_path = os.getcwd()+"/gui_data/model_info.txt"
+        print("selecting a new model : "+selected_model.get())
+        model_log = open(model_log_path,'w')
+        model_log.write(selected_model.get())
+        model_log.close()
+
+        if not os.path.exists(model_path+selected_model.get()+'.pt'):
+            if mb.askokcancel("Server Model Seletected !!!","Do you want to download %s from YOLO-server ?" % selected_model.get()) :
+                print("...Downloading Model from YOLO-server...")
+                download_model(selected_model.get()+'.pt')
+            else:
+                print("Proceed to choose local model instead")
+        mb.showinfo("New Model Selected !!!","Please close this program to take effect.")
     #task = threading.Thread(target=cameraYOLO)
     #task.start()
+def download_model(filename):
+    rep = BytesIO()
+    detect_token = ""
+    login_info = open(os.getcwd()+"/gui_data/login_info.txt","r")
+    model_path = os.getcwd()+"/mine/"
+    temp = login_info.readlines()
+    info = [
+        temp[1].split("\n")[0],
+        temp[2].split("\n")[0]
+    ]
+    prep = pycurl.Curl()
+    prep.setopt(pycurl.URL,server_path+"/api/login")
+    prep.setopt(pycurl.HTTPAUTH,pycurl.HTTPAUTH_BASIC)
+    prep.setopt(pycurl.USERNAME,info[0])
+    prep.setopt(pycurl.PASSWORD,info[1])
+    prep.setopt(pycurl.WRITEDATA,rep)
+    t0 = time.time()
+    prep.perform()
+    print("Time used: %.2f" % (time.time()-t0))
+    if(str(prep.getinfo(pycurl.HTTP_CODE)) == '200'):
+        rep_body = json.loads(rep.getvalue())
+        detect_token = rep_body['token']
+    prep.close()
+
+    get_model = pycurl.Curl()
+    rep = BytesIO()
+    get_model.setopt(pycurl.URL,server_path+"/api/getModel/"+filename)
+    get_model.setopt(pycurl.WRITEDATA,rep)
+    get_model.setopt(pycurl.HTTPHEADER,
+        ["API_TOKEN:"+ detect_token])
+    get_model.perform()
+    if(str(get_model.getinfo(pycurl.HTTP_CODE)) == '200'):
+        rep_body = rep.getvalue()
+        model_file = open(model_path+filename,'wb')
+        model_file.write(rep_body)
+        model_file.close()
+        print("Write Model file success !")
+def send50raw():
+    global file_btn
+
+    file_btn[3].config(state=tkinter.DISABLED)
+    rep = BytesIO()
+    detect_token = ""
+    login_info = open(os.getcwd()+"/gui_data/login_info.txt","r")
+    model_path = os.getcwd()+"/mine/"
+    temp = login_info.readlines()
+    info = [
+        temp[1].split("\n")[0],
+        temp[2].split("\n")[0],
+        temp[0].split("\n")[0]
+    ]
+    prep = pycurl.Curl()
+    prep.setopt(pycurl.URL,server_path+"/api/login")
+    prep.setopt(pycurl.HTTPAUTH,pycurl.HTTPAUTH_BASIC)
+    prep.setopt(pycurl.USERNAME,info[0])
+    prep.setopt(pycurl.PASSWORD,info[1])
+    prep.setopt(pycurl.WRITEDATA,rep)
+    t0 = time.time()
+    prep.perform()
+
+    if(str(prep.getinfo(pycurl.HTTP_CODE)) == '200'):
+        rep_body = json.loads(rep.getvalue())
+        detect_token = rep_body['token']
+    prep.close()
+
+    send50 = threading.Thread(target=send1raw(detect_token,info[2]))
+    send50.start
+def send1raw(token,info):
+    save_path = os.getcwd()+"\\unknown\\raw\\"
+    rep = BytesIO()
+    send50 = pycurl.Curl()
+    for raw in os.listdir(save_path):
+        send50.setopt(pycurl.URL,server_path+"/api/send50raw")
+        send50.setopt(pycurl.POST,1)
+        send50.setopt(pycurl.HTTPPOST,[
+            ("image",(pycurl.FORM_FILE,save_path+raw)),  
+            ])
+        send50.setopt(pycurl.HTTPHEADER,
+            ["Content-Type: multipart/form-data",
+            "API_TOKEN:"+ token,
+            "FACTORY:"+ info,
+            "OBJ-NAME:"+"something"
+            ])
+        send50.setopt(pycurl.WRITEDATA,rep)
+        send50.perform()
+        if(str(send50.getinfo(pycurl.HTTP_CODE)) == '200'):
+            file_insertLog("%s had been sent to YOLO-server " % raw,"info")
+            os.remove(save_path+raw)
+    send50.close()
 def cameraYOLO():
     global isVideoCreated
     start = time.time()

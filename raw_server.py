@@ -7,8 +7,9 @@ import base64
 import os
 import shutil
 import subprocess
+import base64
 
-from flask import Flask,make_response,request,jsonify
+from flask import Flask,make_response,request,jsonify,send_from_directory
 from flask_mongoengine import MongoEngine
 from PIL import Image
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -56,6 +57,21 @@ class Unknown(db.Document):
          "ids": self.ids,
          "filename": self.filename,
          "times": self.times,
+         "file": self.file,
+
+      }
+class RawImage(db.Document):
+
+   factory = db.StringField()
+   objname = db.StringField()
+   file = db.ImageField(thumbnail_size=(256,256))
+
+   def to_json(self):
+
+      return {
+
+         "filename": self.factory,
+         "objname": self.objname,
          "file": self.file,
 
       }
@@ -148,7 +164,7 @@ def token_required(f):
 ##### Basic Routing ######
 @app.route('/',methods=['GET'])
 def hello():
-   return "Hello, THIS IS YOLO-server V1.1 "
+   return "Hello, THIS IS YOLO-server V1.2 , Will do Welcome page and documentation about using this API later"
 @app.route('/api/test/unprotected')
 def unprotected():
    return jsonify({'message':'Anyone can view this!'})
@@ -288,73 +304,57 @@ def retrain():
 
    #return "retrain sessions"
 ### Re-train ####################
-"""
-@app.route('/api/labeled', methods=['GET','POST'])
-def api_lebeled():
-   pass
-@app.route('/api/labeled/<ids>', methods=['POST'])
-def api_each_labeled():
-   pass
 
-
-@app.route('/api/total', methods=['GET'])
-def totallyDevices():
-   pass;
-@app.route('/api/info/getClient/<uniqueName>', methods=['GET'])
+####### list  model in mongoDB ########################
+@app.route('/api/listModel',methods=['GET'])
 @token_required
-def getClient(uniqueName):
-   client = Device.objects.get(uniqueName=uniqueName)
-   return jsonify({'result':client})
-   # return Labeled.query.filter_by(uniqueName=data['uniqueName']).first()
-@app.route('/api/info/addModel', methods=['POST'])
+def listModel():
+   modela = [
+      'SER_model_1',
+      'SER_model_2',
+      'SER_model_3',
+      'SER_model_4',
+   ]
+   return jsonify({'RES': modela})
+####### list model in mongoDB ########################
+####### get  model in mongoDB ########################
+@app.route('/api/getModel/<modelName>',methods=['GET'])
 @token_required
-def addModel():
-   data = request.get_json()
+def getModel(modelName):
+   ser_model_file = os.getcwd()+"/api_unknown/model/"
+   return send_from_directory(ser_model_file,modelName)
+####### get model in mongoDB ########################
+####### store raw image (50 images) for newly trained model ##############
+@app.route('/api/send50raw',methods=['POST'])
+#@token_required
+def send50raw():
+   if request.files and request.headers :
+      image_data = request.files['image']
+      factory = request.headers['FACTORY']
+      objname = request.headers['OBJ-NAME']
 
-   newModel = Model(name=data['name'],pathfile=data['pathfile'])
-   newModel.save()
+      info = client.get_database('API-Detection').get_collection('raw_image').find({"factory":factory})
 
-   return "Successfully model added!"
-@app.route('/api/info/getAllModel', methods=['GET'])
-@token_required
-def getAllModel():
-   output = []
-   for model in Model.objects[:]:
-      output.append(model)
-   return jsonify({'result':output})
-@app.route('/api/info/getOneModel/<name>', methods=['GET'])
-@token_required
-def getOneModel(name):
-   model = Model.objects.get(name=name)
-   return jsonify({'result':model})
-@app.route('/api/info/addTotal', methods=['POST'])
-@token_required
-def addTotal():
-   data = request.get_json()
-   newTotal = Total(ids=data['ids'],daily=data['daily'],total=data['total'])
-   newTotal.save()
+      try:
+         raw_image = RawImage(factory=factory,objname=objname,file=image_data)
+         raw_image.save()
+      except:
+         print("Look like it can't saved")
+      else:
+         return "All is well (%s/50)" % str(info.count())
 
-   return "Successfully model added!"
-@app.route('/api/info/total', methods=['GET'])
-@token_required
-def getTotal():
-   output = []
-   for total in Total.objects[:]:
-      output.append(total)
-   return jsonify({'result':output})
-"""
+####### store raw image (50 images) for newly trained model ##############
 
-"""
-if __name__ == '__main__':
-
-   subprocess.call("cls",shell=True)
-   if os.path.exists('./api_unknown/new') :
-      shutil.rmtree('./api_unknown/new') 
-   os.makedirs('./api_unknown/new') 
-   if os.path.exists('./api_unknown/res') :
-      shutil.rmtree('./api_unknown/res') 
-   os.makedirs('./api_unknown/res') 
-
-   app.run(debug=True,host='0.0.0.0',port=80)
-"""
+##### TESTING function ######################
+@app.route('/api/testfx/<factory>',methods=['GET'])
+def fuckoff(factory):
+   info = client.get_database('API-Detection').get_collection('raw_image').find({"factory":factory})
+   return "This Factory : %s have %s images saved !" % (factory,str(info.count()))
+##### TESTING function ######################
+##### Reset Collection ########################
+@app.route('/api/drop',methods=['GET'])
+def dropone():
+   one = client.get_database('API-Detection').get_collection('raw_image')
+   one.drop()
+   return "Some collection had been dropped"
 
