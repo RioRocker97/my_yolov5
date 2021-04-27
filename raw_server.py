@@ -167,7 +167,7 @@ def token_required(f):
 ##### Basic Routing ######
 @app.route('/',methods=['GET'])
 def hello():
-   return "Hello, THIS IS YOLO-server V1.2 , Will do Welcome page and documentation about using this API later"
+   return "Hello, THIS IS YOLO-server V1.2B , Will do Welcome page and documentation about using this API later"
 @app.route('/api/test/unprotected')
 def unprotected():
    return jsonify({'message':'Anyone can view this!'})
