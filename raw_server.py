@@ -8,6 +8,9 @@ import os
 import shutil
 import subprocess
 import base64
+import ntpath
+import math
+import glob
 
 from flask import Flask,make_response,request,jsonify,send_from_directory
 from flask_mongoengine import MongoEngine
@@ -288,22 +291,56 @@ def api_upload_label():
       return "please put a request file."
 #### Upload Label ###############
 
-### Re-train ####################
-@app.route('/api/working/retrain', methods=['get'])
+### Re-train (raw)####################
+@app.route('/api/working/retrain-model', methods=['POST','GET'])
 #@token_required
-def retrain():
-   pass
-   # count = len(Labeled.identify(
-   #    {"identify" : "bottle"}
-   # ))
-  
-   #return count
+def api_retrain_model():
+   image_path = os.getcwd()+"/assets/images/"
+   label_path = os.getcwd()+"/assets/labels/"
+   yaml_path = os.getcwd()
+   train_path = os.getcwd()+"/train/"
+   test_path  = os.getcwd()+"/test/"
+   num = len(os.listdir(image_path))
+   
+   if request.files:
+      if num >= 50 :
+         file = request.files["yaml"] 
+         file.save(yaml_path+"/dataset.yaml")
+         
+         count_train = math.floor((len(os.listdir(image_path))*90)/100)
+         folder_label = os.listdir(label_path)
+         
+         for filename in glob.glob(image_path+'*.jpg')[:count_train-1]: 
+            head, tail = ntpath.split(filename)
+            img = Image.open(filename)
+            img.save(train_path+"images/"+tail)
+         
+         for filename in glob.glob(label_path+'*.txt')[:count_train-1]: 
+            head, tail = ntpath.split(filename)
+            filename = open(filename,"w")
+            shutil.copyfile(label_path+tail,train_path+'labels/'+tail )
 
-   # for obj in Labeled:
-   #    count = len(obj['bottle'])
+         for filename in glob.glob(image_path+'*.jpg')[count_train:]: 
+            head, tail = ntpath.split(filename)
+            img = Image.open(filename)
+            img.save(test_path+"images/"+tail)
+      
+         for filename in glob.glob(label_path+'*.txt')[count_train:]: 
+            head, tail = ntpath.split(filename)
+            filename = open(filename,"w")
+            shutil.copyfile(label_path+tail,test_path+'labels/'+tail )
+         
+         #runpy.run_path(file_path='train.py')
+         #run python3 train.py --batch 16 --epochs 50 --data mine/dataset.yaml --weights mine/yolov5s.pt
 
-   #return "retrain sessions"
-### Re-train ####################
+         return "YAML file saved and now training new model..."
+
+      else :
+         return "Not enough images, please send more images."
+
+   else :
+      return "please put a request file."
+### Re-train (raw)####################
 
 ####### list  model in mongoDB ########################
 @app.route('/api/listModel',methods=['GET'])
