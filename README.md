@@ -84,6 +84,8 @@ This is part of the final project of computer engineering at Thammsart Universit
     - can swap model (from server) now
     - can send 50 image for re-training
     - what do now ?
+- 29/4/2021
+    - overhaul UI (so customer could you my program easily)
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server
