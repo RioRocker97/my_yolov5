@@ -317,52 +317,41 @@ def api_retrain_model():
          os.remove(test_path+"labels/"+i)
 
 
-      for filename in glob.glob(image_path+'*.jpg')[:]: 
-         head, tail = ntpath.split(filename)
-         if identify in tail:
-               img = Image.open(filename)
-               img.save(train_path+"images/"+tail)
+      for filename in os.listdir(image_path): 
+         img = Image.open(image_path+filename)
+         img.save(train_path+"images/"+filename)
 
       num = len(os.listdir(train_path+"images/"))  
       
       if num >= 50 :
 
          test_img = []
-         import yaml
-         article_info = {'train': './train/images', 
-                           'val': './test/images',
-                           'nc': 1,
-                           'names': '[' +identify+ ']'
-                           }
 
          with open(os.getcwd()+'/dataset.yaml', 'w') as file:
-               documents = yaml.dump(article_info, file)
+            file.write("train: ./train/images/\n")
+            file.write("val: ./test/images/\n")
+            file.write("nc: 1\n")
+            file.write("names: ['"+identify+"']")
+            file.close()
 
-         for filename in glob.glob(label_path+'*.txt')[:]: 
-               headlabel, taillabel = ntpath.split(filename)
-               if identify in taillabel:
-                  filename = open(filename,"w")
-                  shutil.copyfile(label_path+taillabel,train_path+'labels/'+taillabel )   
+         for filename in os.listdir(label_path): 
+            shutil.copyfile(label_path+filename,train_path+'labels/'+filename)   
          
-         for filename in glob.glob(train_path+"images/"+'*.jpg')[int((len(os.listdir(train_path+"images/"))*90)/100):]: 
+         for filename in os.listdir(train_path+"images/")[int((len(os.listdir(train_path+"images/"))*90)/100):]: 
 
-            head, tail = ntpath.split(filename)
-            h,t = tail.split(".", 1)
-            test_img.append(h)
-            img = Image.open(filename)
-            img.save(test_path+"images/"+tail)
-            os.remove(filename)
+            test_img.append(filename.split('.')[0])
+            img = Image.open(train_path+'images/'+filename)
+            img.save(test_path+"images/"+filename)
+            os.remove(train_path+"images/"+filename)
 
-         for filename in glob.glob(train_path+"labels/"+'*.txt')[:]: 
+         for filename in os.listdir(train_path+"labels/"): 
 
-            headlabel, taillabel = ntpath.split(filename)
-            h,t = taillabel.split(".", 1)
-            if h in test_img:
-               shutil.copyfile(train_path+"labels/"+taillabel,test_path+'labels/'+taillabel )
-               os.remove(filename)
+            if filename.split('.')[0] in test_img:
+               shutil.copyfile(train_path+"labels/"+filename,test_path+'labels/'+filename)
+               os.remove(train_path+'labels/'+filename)
 
-         #subprocess.call("python3 train.py --batch 16 --epochs 50"+ 
-         #        "--data ./dataset.yaml --weights mine/yolov5s.pt",shell=True)
+         subprocess.call("python3 train.py --batch 16 --epochs 50"+ 
+                 " --data ./dataset.yaml --weights mine/yolov5s.pt",shell=True)
 
          return "YAML file saved and now training new model..."
 
