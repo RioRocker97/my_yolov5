@@ -11,6 +11,7 @@ import base64
 import ntpath
 import math
 import glob
+import runpy
 
 from flask import Flask,make_response,request,jsonify,send_from_directory
 from flask_mongoengine import MongoEngine
@@ -279,7 +280,7 @@ def api_upload_label():
          
       filename = "labeled_"+str(num)
       file.save(image_path+filename+".jpg")
-      text.save(image_path+filename+".txt")
+      text.save(label_path+filename+".txt")
      
       ids = str(num)
       label1 = Labeled(ids=ids,filename=filename,imgfile=file,labelfile=text,identify=identify,labeledby=labeledby)
@@ -295,8 +296,8 @@ def api_upload_label():
 @app.route('/api/working/retrain-model', methods=['POST','GET'])
 #@token_required
 def api_retrain_model():
-   image_path = os.getcwd()+"/assets/images/"
-   label_path = os.getcwd()+"/assets/labels/"
+   image_path = os.getcwd()+"/assets/labels/"
+   label_path = os.getcwd()+"/assets/texts/"
    yaml_path = os.getcwd()
    train_path = os.getcwd()+"/train/"
    test_path  = os.getcwd()+"/test/"
@@ -329,8 +330,11 @@ def api_retrain_model():
             head, tail = ntpath.split(filename)
             filename = open(filename,"w")
             shutil.copyfile(label_path+tail,test_path+'labels/'+tail )
-         
-         #runpy.run_path(file_path='train.py')
+        
+         #subprocess.call("python3 train.py --batch 16 --epochs 50"+ 
+         #        "--data ./dataset.yaml --weights mine/yolov5s.pt",shell=True)
+
+         runpy.run_path(file_path='train.py')
          #run python3 train.py --batch 16 --epochs 50 --data mine/dataset.yaml --weights mine/yolov5s.pt
 
          return "YAML file saved and now training new model..."
