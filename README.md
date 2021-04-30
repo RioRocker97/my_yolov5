@@ -101,7 +101,7 @@ This is part of the final project of computer engineering at Thammsart Universit
 ## OVERHAUL UI Progression (v1.7)
 
 | Status | Feature | Status | Feature | 
-| :-: | - | :-: | - | - |
+| :-: | :-: | :-: | :-: | 
 | :white_check_mark: | preload YOLO model | :x: | detect Mode |
 | :x: | view mode | :x: | capture Mode |
 
