@@ -12,6 +12,11 @@ Student NO.6010613518
 
 This is part of the final project of computer engineering at Thammsart University.
 
+## Result
+| old UI (pre v1.7) | new UI (v1.7+)
+| - | - |
+| <img src="https://i.imgur.com/NRknPKA.jpg" width="100%"> | <img src="https://i.imgur.com/8KFlaUQ.jpg" width="100%"> |
+
 ## Progression Note
 - 22/11/2020
     - already train solid model for specific task(3 cap type + 1 unknows)
@@ -85,7 +90,7 @@ This is part of the final project of computer engineering at Thammsart Universit
     - can send 50 image for re-training
     - what do now ?
 - 29/4/2021
-    - overhaul UI (so customer could you my program easily)
+    - overhaul UI (so customer could use my program easily)
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server
@@ -93,7 +98,11 @@ This is part of the final project of computer engineering at Thammsart Universit
 - BASE_DIR\gui_data : for saving file to be used in building GUI
 - BASE_DIR\mine : for saving local model file
 
-## Result
-<img src="https://i.imgur.com/NRknPKA.jpg" width="50%" style="padding-left:200px;">
+## OVERHAUL UI Progression (v1.7)
+
+| Status | Feature | Status | Feature | 
+| :-: | - | :-: | - | - |
+| :white_check_mark: | preload YOLO model | :x: | detect Mode |
+| :x: | view mode | :x: | capture Mode |
 
 <img src="https://i.imgur.com/VkV3hD4.png" width="75%">
