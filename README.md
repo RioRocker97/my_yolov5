@@ -93,7 +93,9 @@ This is part of the final project of computer engineering at Thammsart Universit
     - overhaul UI (so customer could use my program easily)
 - 1/5/2021
     - detection is possible
-    - applicaiton structure feel like it too complexed.... but it work fine 
+    - applicaiton structure feel like it too complexed.... but it work fine
+- 2/5/2021
+    - from now on , update will be appear below
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server
@@ -107,10 +109,11 @@ This is part of the final project of computer engineering at Thammsart Universit
 | :-: | :-: | :-: | :-: | 
 | :white_check_mark: | preload YOLO model | :white_check_mark: | detect and stop |
 | :white_check_mark: | login to YOLO-server | :white_check_mark: | folder & file for GUI |
-| :white_check_mark: | list all Model (Local&Sever) |  |  |
-| :hourglass: | Swap a new model | :hourglass: | register to YOLO-server |
-| :hourglass: | file handling | |  |
-| :x: | view mode | :x: | capture Mode |
-| :x: | something else |  | |
+| :white_check_mark: | list all Model (Local&Sever) | :white_check_mark: | download server model |
+| :white_check_mark: | Swap a new model | :white_check_mark: | register to YOLO-server |
+| :hourglass: | file handling | :hourglass: | test connection |
+| :hourglass: | send unknown | :hourglass: | get unknown result |
+| :hourglass: | view mode |  |  |
+| :x: | something else | :x: | capture Mode |
 
 <img src="https://i.imgur.com/VkV3hD4.png" width="75%">

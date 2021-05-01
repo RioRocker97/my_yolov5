@@ -183,9 +183,8 @@ def protected():
 def api_register():
 
    data = request.get_json()
-   #auth_token = user.encode_auth_token(user.id)
+   new_id = str(int(client.get_database('API-Detection').get_collection('device').count())+1)
    if str(data['aType']) == 'iot':
-      new_id = str(int(client.get_database('API-Detection').get_collection('device').count())+1)
       hashed = generate_password_hash(data['password'], method='sha256')
       uniqueName = str(data['factory']+"_"+data['aType']+"_"+new_id)
 
@@ -197,10 +196,10 @@ def api_register():
 
    elif str(data['aType']) == 'mobile' :
 
-      newDevice = Device(ids=data['ids'],username="",aType=data['aType'],factory="",password="",uniqueName="")
+      newDevice = Device(ids=new_id,username="",aType=data['aType'],factory="",password="",uniqueName="")
       newDevice.save()
       
-      return "Successfully appied! [mobile]"
+      return "Successfully appied! [mobile]\n"
    
    else :
       return "Invalid data"
