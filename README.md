@@ -91,6 +91,9 @@ This is part of the final project of computer engineering at Thammsart Universit
     - what do now ?
 - 29/4/2021
     - overhaul UI (so customer could use my program easily)
+- 1/5/2021
+    - detection is possible
+    - applicaiton structure feel like it too complexed.... but it work fine 
 ## New File Location
 
 - BASE_DIR\unknown : for saving unknown image to be sent to server
@@ -103,6 +106,7 @@ This is part of the final project of computer engineering at Thammsart Universit
 | Status | Feature | Status | Feature | 
 | :-: | :-: | :-: | :-: | 
 | :white_check_mark: | preload YOLO model | :x: | detect Mode |
+| :white_check_mark: | detect and stop | :x: | calling YOLO-server's API |
 | :x: | view mode | :x: | capture Mode |
 
 <img src="https://i.imgur.com/VkV3hD4.png" width="75%">

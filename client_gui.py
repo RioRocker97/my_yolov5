@@ -1,6 +1,5 @@
 import threading,cv2,os,time
 from PIL import Image,ImageTk
-from tkinter import Image as tkImage
 from tkinter import Label,scrolledtext,Button,OptionMenu,StringVar,LabelFrame,Entry,Tk
 from mygui_detect import prepareYolo,runYolo
 
@@ -9,7 +8,7 @@ from mygui_detect import prepareYolo,runYolo
 # they all mess up tkinter internal function again
 ###### Status Variable #########
 IS_VDO_CREATED = False
-IS_VDO_STOP = True
+IS_VDO_STOP = False
 MODEL_PATH = "./mine/cap_unk.pt"
 ###### Status Variable #########
 ###### Regular Variable #########
@@ -78,60 +77,22 @@ class clientUserInfo(LabelFrame):
         self.factory.place(relx=0.02,rely=0.01)
         self.deviceID.place(relx=0.02,rely=0.2)
         self.server_status.place(relx=0.02,rely=0.4)
-#Client Screen handler
-class clientScreen(Label):
-    def __init__(self, master=None,vdo_slot=None,**kw):
-        super().__init__(master=master,**kw)
-
-        self.vdo_slot =vdo_slot
-    
-    def __liveYOLO(self):
-        global IS_VDO_STOP,OBJ_COUNT
-        #root = Tk()
-        if not IS_VDO_STOP:
-            temp_count,frame = runYolo(OBJ_COUNT['current'])
-            self.__convertImageToTk(frame)
-            self.configure(image=self.vdo_slot)
-
-            if OBJ_COUNT['last'] <= temp_count:
-                OBJ_COUNT['current'] += (temp_count - OBJ_COUNT['last'])
-                OBJ_COUNT['last'] = temp_count
-            if temp_count == 0:
-                OBJ_COUNT['last'] = 0
-            #self.after(10,self.__liveYOLO)
-
-    def __convertImageToTk(self,frame):
-        
-        root = Tk()
-        imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-        imageVDO2 = Image.fromarray(imageVDO).resize((480,360))
-        self.vdo_slot = ImageTk.PhotoImage(image=imageVDO2)
-        root.update()
-
-    def detectMode(self,log=clientLog):
-        global IS_VDO_CREATED,IS_VDO_STOP
-        log.warn_msg('////////// Detect Mode //////////')
-        if IS_VDO_CREATED:
-            log.ok_msg('.......... Begin Detection ............')
-            live_yolo = threading.Thread(target=self.__liveYOLO)
-            live_yolo.start()
 
 ##############################################################
 #Main Application
 class clientGUI(Tk):
     __allImages = {}
     __allWidgets = {
-        'log' : clientLog(),
-        'screen' : clientScreen(),
-        'detect' : Button(),
-        'detect_isOn' : Label()
+        #'log' : clientLog(),
+        #'screen' : Label(),
+        #'detect' : Button(),
+        #'detect_isOn' : Label()
     }
     __allModes ={
         'detect' : False,
         'view' : False,
         'capture' : False
     }
-    abc = 'ok'
     def __init__(self,VERSION):
         super().__init__()
         self.__loadGUIphoto()
@@ -145,10 +106,7 @@ class clientGUI(Tk):
 
         # build components (text,button,log,screen ETC.)
         count_label = Label(self,text="Today Count : 000")
-        clientGUI.__allWidgets['screen'] = clientScreen(self,
-            image=clientGUI.__allImages['screen_img'],
-            vdo_slot=clientGUI.__allImages['screen_img'])
-
+        clientGUI.__allWidgets['screen'] = Label(self,image=clientGUI.__allImages['screen_img'])
         clientGUI.__allWidgets['log'] = clientLog(self,state='disabled',borderwidth=10)
         clientGUI.__allWidgets['detect'] = Button(self,command=self.__detect_btn,image=clientGUI.__allImages['detect'])
         clientGUI.__allWidgets['view'] = Button(self,command=self.__view_btn,image=clientGUI.__allImages['view'])
@@ -185,7 +143,7 @@ class clientGUI(Tk):
 
     # private Function
     def __loadModel(self):
-        global IS_VDO_CREATED,MODEL_PATH
+        global IS_VDO_CREATED,MODEL_PATH,IS_VDO_STOP
         start = time.time()
         model_name = MODEL_PATH.split('/')[2]
 
@@ -204,7 +162,8 @@ class clientGUI(Tk):
             clientGUI.__allWidgets.get('log').ok_msg("Time used : (%.2fs)" % (time.time()-start))
             clientGUI.__allWidgets.get('detect').config(state='normal')
             clientGUI.__allWidgets.get('detect_isOn').configure(image=clientGUI.__allImages['isOff'])
-            IS_VDO_CREATED = True   
+            IS_VDO_CREATED = True
+            IS_VDO_STOP = False   
     def __loadGUIphoto(self):
         clientGUI.__allImages['icon'] = ImageTk.PhotoImage(Image.open("gui_data/icon.jpg"),master=self)
         clientGUI.__allImages['screen_img'] = ImageTk.PhotoImage(Image.new('RGB',(480,360)),master=self)
@@ -215,6 +174,37 @@ class clientGUI(Tk):
         clientGUI.__allImages['isWarn'] = ImageTk.PhotoImage(Image.new('RGB',(64,20),'#FFD700'),master=self)
         clientGUI.__allImages['isOff'] = ImageTk.PhotoImage(Image.new('RGB',(64,20)),master=self)
     
+    def __detectProcess(self):
+        global IS_VDO_CREATED,IS_VDO_STOP
+        clientGUI.__allWidgets['log'].warn_msg('////////// Detect Mode //////////')
+        if IS_VDO_CREATED:
+            clientGUI.__allWidgets['log'].ok_msg('.......... Begin Detection ............')
+            live_yolo = threading.Thread(target=self.__liveYOLO)
+            live_yolo.start()
+    def __liveYOLO(self):
+        global IS_VDO_STOP,OBJ_COUNT
+        while not IS_VDO_STOP:
+            temp_count,frame = runYolo(OBJ_COUNT['current'])
+            vdo_slot = self.__convertImageToTk(frame)
+            clientGUI.__allWidgets['screen'].configure(image=vdo_slot)
+
+            if OBJ_COUNT['last'] <= temp_count:
+                OBJ_COUNT['current'] += (temp_count - OBJ_COUNT['last'])
+                OBJ_COUNT['last'] = temp_count
+            if temp_count == 0:
+                OBJ_COUNT['last'] = 0
+        if IS_VDO_STOP:
+            vdo_slot = clientGUI.__allImages['screen_img']
+            clientGUI.__allWidgets['screen'].configure(image=vdo_slot)
+    def __convertImageToTk(self,frame):
+        imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+        imageVDO2 = Image.fromarray(imageVDO).resize((480,360))
+        imageVDO3 = ImageTk.PhotoImage(image=imageVDO2,master=self)
+        return imageVDO3
+    def __stopAndReloadliveYOLO(self):
+        clientGUI.__allWidgets['log'].warn_msg('...... Reload a model .......')
+        self.__loadModel()
+    
     def __clear_mode(self):
         clientGUI.__allWidgets.get('detect_isOn').configure(image=clientGUI.__allImages.get('isOff'))
         clientGUI.__allWidgets.get('view_isOn').configure(image=clientGUI.__allImages.get('isOff'))
@@ -224,6 +214,16 @@ class clientGUI(Tk):
             btn.configure(image=clientGUI.__allImages.get('isOn'))
         else :
             btn.configure(image=clientGUI.__allImages.get('isOff'))
+    def __chang_mode_color(self,btn,status=''):
+        status = status.lower()
+        if status == 'on':
+            btn.configure(image=clientGUI.__allImages.get('isOn'))
+        elif status == 'off':
+            btn.configure(image=clientGUI.__allImages.get('isOff'))
+        elif status == 'warn':
+            btn.configure(image=clientGUI.__allImages.get('isWarn'))
+    def __default_screen(self):
+        pass
     def __detect_btn(self):
         global IS_VDO_CREATED,IS_VDO_STOP
         self.__clear_mode()
@@ -232,16 +232,13 @@ class clientGUI(Tk):
 
         if IS_VDO_CREATED :
             if clientGUI.__allModes['detect']:
-                IS_VDO_STOP = False
-                #clientGUI.__allWidgets['screen'].detectMode(log=clientGUI.__allWidgets['log'])
-                task = threading.Thread(target=clientGUI.__allWidgets['screen'].detectMode(log=clientGUI.__allWidgets['log']))
+                task = threading.Thread(target=self.__detectProcess)
                 task.start()
             else :
                 IS_VDO_STOP = True
-        
-
-
-
+                self.__default_screen()
+                task = threading.Thread(target=self.__stopAndReloadliveYOLO)
+                task.start()
     def __view_btn(self):
         self.__clear_mode()
         clientGUI.__allWidgets.get('view_isOn').configure(image=clientGUI.__allImages.get('isOn'))
