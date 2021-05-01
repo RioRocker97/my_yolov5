@@ -1,4 +1,5 @@
 import threading,cv2,os,time,pycurl,json
+from platform import system
 from PIL import Image,ImageTk
 from io import BytesIO
 from tkinter import Label,scrolledtext,Button,OptionMenu,StringVar,LabelFrame,Entry,Tk
@@ -10,7 +11,7 @@ from mygui_detect import prepareYolo,runYolo
 ###### Status Variable #########
 IS_VDO_CREATED = False
 IS_VDO_STOP = False
-MODEL_PATH = "./mine/cap_unk.pt"
+#MODEL_PATH = "./mine/cap_unk.pt"
 ###### Status Variable #########
 ###### Regular Variable #########
 OBJ_COUNT = {
@@ -87,6 +88,8 @@ class useYOLOserver():
         self.token = ''
     
     def test_server(self):
+        self.rep = BytesIO()
+        self.api = pycurl.Curl()
         self.api.setopt(pycurl.URL,self.server)
         self.api.setopt(pycurl.WRITEDATA,self.rep)
         t0 = time.time()
@@ -101,7 +104,10 @@ class useYOLOserver():
             print("error at calling API")
         else:
             self.api.close()
+            self.rep.close()
     def login(self):
+        self.rep = BytesIO()
+        self.api = pycurl.Curl()
         self.api.setopt(pycurl.URL,self.server+"/api/login")
         self.api.setopt(pycurl.HTTPAUTH,pycurl.HTTPAUTH_BASIC)
         self.api.setopt(pycurl.USERNAME,"cap-det1")
@@ -121,9 +127,12 @@ class useYOLOserver():
             print("error at calling API")
         else:
             self.api.close()
+            self.rep.close()
     def register(self):
         # will do data/file handling later
         data = json.dumps()
+        self.rep = BytesIO()
+        self.api = pycurl.Curl()
         self.api.setopt(pycurl.URL,self.server+"/api/register")
         self.api.setopt(pycurl.POST,1)
         self.api.setopt(pycurl.HTTPHEADER, ['Accept: application/json','Content-Type: application/json'])
@@ -144,9 +153,12 @@ class useYOLOserver():
             print("error at calling API")
         else:
             self.api.close()
+            self.rep.close()
     def unknown(self):
         unknown_path = ''
         # will do file/data handling later
+        self.rep = BytesIO()
+        self.api = pycurl.Curl()
         self.api.setopt(pycurl.URL,self.server+"/api/detect")
         self.api.setopt(pycurl.POST,1)
         self.api.setopt(pycurl.HTTPPOST,[
@@ -168,11 +180,14 @@ class useYOLOserver():
             print("error at calling API")
         else:
             self.api.close()
+            self.rep.close()
     def send_raw1(self,token,info):
         save_path = 'filepath'
         raw = 'filename'
         total_time = 0
         # will do file handling later
+        self.rep = BytesIO()
+        self.api = pycurl.Curl()
         self.api.setopt(pycurl.URL,self.server+"/api/send50raw")
         self.api.setopt(pycurl.POST,1)
         self.api.setopt(pycurl.HTTPPOST,[
@@ -200,8 +215,132 @@ class useYOLOserver():
             print("error at calling API")
         else:
             self.api.close()
+            self.rep.close()
+    def getServerModel(self,list_model=[]):
+        list_model.append('/// SERVER ///')
+        try:
+            self.login()
+        except:
+            print('Login Failed')
+            list_model.append('### ERROR ####')
+            return list_model
+        self.rep = BytesIO()
+        self.api = pycurl.Curl()
+        self.api.setopt(pycurl.URL,self.server+"/api/listModel")
+        self.api.setopt(pycurl.WRITEDATA,self.rep)
+        self.api.setopt(pycurl.HTTPHEADER,
+        ["API_TOKEN:"+ self.token])
+        t0 = time.time()
+        # will do API's respone handling later
+        try:
+            self.api.perform()
+            print("Time used: %.2f" % (time.time()-t0))
+            if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
+                print("get Server Model List success !")
+                rep_body = json.loads(self.rep.getvalue())
+                ser_model = rep_body['RES']
+                for i in ser_model:
+                    list_model.append(i)
+            else:
+                print("Server is DOWN !")
+        except:
+            print("error at calling API")
+        else:
+            self.api.close()
+            self.rep.close()
+            return list_model
+    def downloadServerModel(self,model_path,filename,info):
+        try:
+            self.login()
+        except:
+            print('Login Failed')
+            print("Can't load new model from YOLO-server")
+            pass
+        self.rep = BytesIO()
+        self.api = pycurl.Curl()
+        self.api.setopt(pycurl.URL,self.server+"/api/getModel/"+filename)
+        self.api.setopt(pycurl.HTTPHEADER,
+        ["API_TOKEN:"+ self.token])
+        self.api.setopt(pycurl.WRITEDATA,self.rep)
+        t0 = time.time()
+        try:
+            self.api.perform()
+            print("Time used: %.2f" % (time.time()-t0))
+            if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
+                print("download "+filename+" from YOLO-server success !")
+                rep_body = self.rep.getvalue()
+                model_file = open(model_path+filename,'wb')
+                model_file.write(rep_body)
+                model_file.close()
+                print("Write Model file success !")
+            else:
+                print("Server is DOWN !")
+        except:
+            print("error at calling API")
+        else:
+            self.api.close()
+            self.rep.close()
+
+#Client File Handler
+# (except Image/icon data. those things will be handled by clientGUI coz'
+# TK's stupid internal function won't let me call ImageTK data before TK() exist)
+class clientFileData():
+    def __init__(self):
+        self.mainPath = os.getcwd()
+        self.folder ={
+            'GUIData': self.mainPath+"/gui_data/",
+            'ModelData' : self.mainPath+"/mine/",
+            'UnknownData': self.mainPath+"/unknown/",
+            'RawData': self.mainPath+"/unknown/raw/"
+        }
+        self.all_file = {
+            'count':self.folder['GUIData']+'count_info.txt',
+            'device':self.folder['GUIData']+'login_info.txt',
+            'model':self.folder['GUIData']+'model_info.txt',
+        }
+        self.currModelPath = "./mine/cap_unk.pt"
+        self.currModel = "cap_unk"
+        for path in self.folder:
+            if not os.path.exists(self.folder[path]):
+                print(path+' Folder not found. creating new one')
+                os.makedirs(self.folder[path])
+            else:
+                print(path+' Folder found.')
+        for path in self.all_file:
+            if not os.path.isfile(self.all_file[path]):
+                print(path+' File not found. creating new one')
+                new_file = open(self.all_file[path],'w')
+                new_file.close()
+            else:
+                print(path+' File found.')
+        _ = self.getCurrentModel()
+
+    def getCurrentModel(self):
+        model_file = open(self.all_file['model'],'r')
+        if model_file.read() == '':
+            model_file = open(self.all_file['model'],'w')
+            model_file.write(self.currModel)
+        model_file = open(self.all_file['model'],'r')
+        self.currModel = model_file.read()
+        self.currModelPath = './mine/'+self.currModel+'.pt'
+        model_file.close()
+        return self.currModel
+    def setCurrentModel(self,new_model=''):
+        model_file = open(self.all_file['model'],'w')
+        self.currModel = new_model
+        self.currModelPath = './mine/'+self.currModel+'.pt'
+        model_file.write(self.currModel)
+    def getCurrentModelPath(self):
+        return self.currModelPath
+    def getListLocalModels(self):
+        local_model =['/// LOCAL ///']
+        for file in os.listdir(self.folder['ModelData']):
+            if file.split('.')[1] == 'pt':
+                local_model.append(file.split('.')[0])
+        return local_model
+
 ##############################################################
-#Main Application
+#Main Application's GUI building wil Tkinter
 class clientGUI(Tk):
     __allImages = {}
     __allWidgets = {
@@ -217,17 +356,22 @@ class clientGUI(Tk):
     }
     def __init__(self,VERSION):
         super().__init__()
+        self.fileHandler = clientFileData()
+        self.yoloServer = useYOLOserver()
+
+        self.modelList = self.fileHandler.getListLocalModels()
+        self.modelList = self.yoloServer.getServerModel(list_model=self.modelList)
+
         self.__buildGUI(VERSION)
 
-        self.yoloServer = useYOLOserver()
-        task = threading.Thread(target=self.yoloServer.test_server)
-        task.start()
+        #task = threading.Thread(target=self.yoloServer.test_server)
+        #task.start()
     
     ############### private Function #############################
     def __buildGUI(self,VERSION):
         self.__loadGUIphoto()
         selected_model = StringVar(self)
-        selected_model.set("Something")
+        selected_model.set(self.fileHandler.getCurrentModel())
 
         self.title("YOLO-client v"+VERSION)
         self.geometry("800x600")
@@ -244,7 +388,7 @@ class clientGUI(Tk):
         clientGUI.__allWidgets['detect_isOn'] = Label(self,image=clientGUI.__allImages['isOff'])
         clientGUI.__allWidgets['view_isOn'] = Label(self,image=clientGUI.__allImages['isOff'])
         clientGUI.__allWidgets['cap_isOn'] = Label(self,image=clientGUI.__allImages['isOff'])
-        clientGUI.__allWidgets['model'] = OptionMenu(self,selected_model,['1','2'])
+        clientGUI.__allWidgets['model'] = OptionMenu(self,selected_model,*self.modelList)
         suggestion_label = Label(self,text="Recommend Model : \n ABC-123")
         clientGUI.__allWidgets['user_info'] = clientUserInfo(self,text="Device Info")
         
@@ -271,16 +415,15 @@ class clientGUI(Tk):
         clientGUI.__allWidgets['log'].place(relx=0.01,rely=0.72,width=500,height=150)
         clientGUI.__allWidgets['user_info'].place(relx=0.64,rely=0.72,width=280,height=150) 
     def __loadModel(self):
-        global IS_VDO_CREATED,MODEL_PATH,IS_VDO_STOP
+        global IS_VDO_CREATED,IS_VDO_STOP
         start = time.time()
-        model_name = MODEL_PATH.split('/')[2]
 
         clientGUI.__allWidgets.get('detect').config(state='disabled')
         clientGUI.__allWidgets.get('detect_isOn').configure(image=clientGUI.__allImages['isWarn'])
         try:
             clientGUI.__allWidgets.get('log').warn_msg("...Preparing Camera && YOLOv5 model...")
-            clientGUI.__allWidgets.get('log').warn_msg("...Using Model : "+model_name)
-            prepareYolo(MODEL_PATH)
+            clientGUI.__allWidgets.get('log').warn_msg("...Using Model : "+self.fileHandler.getCurrentModel())
+            prepareYolo(self.fileHandler.getCurrentModelPath())
         except:
             clientGUI.__allWidgets.get('log').error_msg("### Error loading camera && YoloV5 ###")
             clientGUI.__allWidgets.get('log').error_msg("### Plug in any camera and Restart YOLO-Client ###")

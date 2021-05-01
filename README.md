@@ -101,12 +101,16 @@ This is part of the final project of computer engineering at Thammsart Universit
 - BASE_DIR\gui_data : for saving file to be used in building GUI
 - BASE_DIR\mine : for saving local model file
 
-## OVERHAUL UI Progression (v1.7)
+## OVERHAUL UI Progression (v1.7+)
 
 | Status | Feature | Status | Feature | 
 | :-: | :-: | :-: | :-: | 
-| :white_check_mark: | preload YOLO model | :x: | detect Mode |
-| :white_check_mark: | detect and stop | :x: | calling YOLO-server's API |
+| :white_check_mark: | preload YOLO model | :white_check_mark: | detect and stop |
+| :white_check_mark: | login to YOLO-server | :white_check_mark: | folder & file for GUI |
+| :white_check_mark: | list all Model (Local&Sever) |  |  |
+| :hourglass: | Swap a new model | :hourglass: | register to YOLO-server |
+| :hourglass: | file handling | |  |
 | :x: | view mode | :x: | capture Mode |
+| :x: | something else |  | |
 
 <img src="https://i.imgur.com/VkV3hD4.png" width="75%">
