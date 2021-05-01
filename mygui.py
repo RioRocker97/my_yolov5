@@ -1,3 +1,3 @@
 from client_gui import runApp
 
-runApp("1.7 Alpha")
+runApp("1.7.2 Alpha")

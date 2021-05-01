@@ -1,5 +1,6 @@
-import threading,cv2,os,time
+import threading,cv2,os,time,pycurl,json
 from PIL import Image,ImageTk
+from io import BytesIO
 from tkinter import Label,scrolledtext,Button,OptionMenu,StringVar,LabelFrame,Entry,Tk
 from mygui_detect import prepareYolo,runYolo
 
@@ -77,7 +78,128 @@ class clientUserInfo(LabelFrame):
         self.factory.place(relx=0.02,rely=0.01)
         self.deviceID.place(relx=0.02,rely=0.2)
         self.server_status.place(relx=0.02,rely=0.4)
-
+#Client to YOLO-server connection
+class useYOLOserver():
+    def __init__(self,server='127.0.0.1'):
+        self.api = pycurl.Curl()
+        self.server = server
+        self.rep = BytesIO()
+        self.token = ''
+    
+    def test_server(self):
+        self.api.setopt(pycurl.URL,self.server)
+        self.api.setopt(pycurl.WRITEDATA,self.rep)
+        t0 = time.time()
+        try:
+            self.api.perform()
+            print("Time used: %.2f" % (time.time()-t0))
+            if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
+                print("Server is UP !")
+            else:
+                print("Server is DOWN !")
+        except:
+            print("error at calling API")
+        else:
+            self.api.close()
+    def login(self):
+        self.api.setopt(pycurl.URL,self.server+"/api/login")
+        self.api.setopt(pycurl.HTTPAUTH,pycurl.HTTPAUTH_BASIC)
+        self.api.setopt(pycurl.USERNAME,"cap-det1")
+        self.api.setopt(pycurl.PASSWORD,"detect123")
+        self.api.setopt(pycurl.WRITEDATA,self.rep)
+        t0 = time.time()
+        try:
+            self.api.perform()
+            print("Time used: %.2f" % (time.time()-t0))
+            if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
+                print("Login success !")
+                body = json.loads(self.rep.getvalue())
+                self.token = body['token']
+            else:
+                print("Server is DOWN !")
+        except:
+            print("error at calling API")
+        else:
+            self.api.close()
+    def register(self):
+        # will do data/file handling later
+        data = json.dumps()
+        self.api.setopt(pycurl.URL,self.server+"/api/register")
+        self.api.setopt(pycurl.POST,1)
+        self.api.setopt(pycurl.HTTPHEADER, ['Accept: application/json','Content-Type: application/json'])
+        self.api.setopt(pycurl.POSTFIELDS, data)
+        self.api.setopt(pycurl.WRITEDATA,self.rep)
+        t0 = time.time()
+        # will do API's respone handling later
+        try:
+            self.api.perform()
+            print("Time used: %.2f" % (time.time()-t0))
+            if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
+                print("Login success !")
+                body = json.loads(self.rep.getvalue())
+                self.token = body['token']
+            else:
+                print("Server is DOWN !")
+        except:
+            print("error at calling API")
+        else:
+            self.api.close()
+    def unknown(self):
+        unknown_path = ''
+        # will do file/data handling later
+        self.api.setopt(pycurl.URL,self.server+"/api/detect")
+        self.api.setopt(pycurl.POST,1)
+        self.api.setopt(pycurl.HTTPPOST,[
+            ("image",(pycurl.FORM_FILE,unknown_path)),  
+            ])
+        self.api.setopt(pycurl.WRITEDATA,self.rep)
+        t0 = time.time()
+        # will do API's respone handling later
+        try:
+            self.api.perform()
+            print("Time used: %.2f" % (time.time()-t0))
+            if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
+                print("Login success !")
+                body = json.loads(self.rep.getvalue())
+                self.token = body['token']
+            else:
+                print("Server is DOWN !")
+        except:
+            print("error at calling API")
+        else:
+            self.api.close()
+    def send_raw1(self,token,info):
+        save_path = 'filepath'
+        raw = 'filename'
+        total_time = 0
+        # will do file handling later
+        self.api.setopt(pycurl.URL,self.server+"/api/send50raw")
+        self.api.setopt(pycurl.POST,1)
+        self.api.setopt(pycurl.HTTPPOST,[
+            ("image",(pycurl.FORM_FILE,save_path+raw)),  
+            ])
+        self.api.setopt(pycurl.HTTPHEADER,
+            ["Content-Type: multipart/form-data",
+            "API_TOKEN:"+ token,
+            "FACTORY:"+ info,
+            "OBJ-NAME:"+"something"
+            ])
+        self.api.setopt(pycurl.WRITEDATA,rep)
+        t0 = time.time()
+        # will do API's respone handling later
+        try:
+            self.api.perform()
+            total_time = time.time()-t0
+            if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
+                print("Login success !")
+                body = json.loads(self.rep.getvalue())
+                self.token = body['token']
+            else:
+                print("Server is DOWN !")
+        except:
+            print("error at calling API")
+        else:
+            self.api.close()
 ##############################################################
 #Main Application
 class clientGUI(Tk):
@@ -95,6 +217,14 @@ class clientGUI(Tk):
     }
     def __init__(self,VERSION):
         super().__init__()
+        self.__buildGUI(VERSION)
+
+        self.yoloServer = useYOLOserver()
+        task = threading.Thread(target=self.yoloServer.test_server)
+        task.start()
+    
+    ############### private Function #############################
+    def __buildGUI(self,VERSION):
         self.__loadGUIphoto()
         selected_model = StringVar(self)
         selected_model.set("Something")
@@ -139,9 +269,7 @@ class clientGUI(Tk):
         suggestion_label.place(relx=0.65,rely=0.3)
 
         clientGUI.__allWidgets['log'].place(relx=0.01,rely=0.72,width=500,height=150)
-        clientGUI.__allWidgets['user_info'].place(relx=0.64,rely=0.72,width=280,height=150)
-
-    # private Function
+        clientGUI.__allWidgets['user_info'].place(relx=0.64,rely=0.72,width=280,height=150) 
     def __loadModel(self):
         global IS_VDO_CREATED,MODEL_PATH,IS_VDO_STOP
         start = time.time()
@@ -255,10 +383,6 @@ class clientGUI(Tk):
         
         main_gui = threading.Thread(target=self.mainloop())
         main_gui.start()
-
-############
-#program = clientGUI('V1.7.1 Alpha')
-############
 
 def runApp(ver):
     program = clientGUI(ver)
