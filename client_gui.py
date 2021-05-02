@@ -1,11 +1,9 @@
-import threading,cv2,os,time,pycurl,json,base64,shutil
-from platform import system
+import threading,cv2
 from PIL import Image,ImageTk
-from io import BytesIO
-from tkinter import Label,scrolledtext,Button,StringVar,LabelFrame,Entry,Tk,messagebox
+from tkinter import Label,Button,StringVar,Tk
 from tkinter.ttk import Combobox
 from mygui_detect import prepareYolo,runYolo
-
+from client_backend import *
 # don't forget to remove fake initialize value in clientGUI
 # don't forget to remove default value that in a part of tkinter 
 # they all mess up tkinter internal function again
@@ -21,6 +19,7 @@ OBJ_COUNT = {
     'unknown' : 0
 }
 ###### Regular Variable #########
+"""
 #Client to YOLO-server connection
 class useYOLOserver():
     def __init__(self,server='127.0.0.1'):
@@ -149,7 +148,7 @@ class useYOLOserver():
             "FACTORY:"+ info,
             "OBJ-NAME:"+"something"
             ])
-        self.api.setopt(pycurl.WRITEDATA,rep)
+        self.api.setopt(pycurl.WRITEDATA,self.rep)
         t0 = time.time()
         # will do API's respone handling later
         try:
@@ -473,7 +472,7 @@ class clientUserInfo(LabelFrame):
             self.__init__(self.parent,userInfo=self.userInfo)
         else :
             print('Register canceled')
-
+"""
 ##############################################################
 #Main Application's GUI building wil Tkinter
 class clientGUI(Tk):
@@ -498,6 +497,7 @@ class clientGUI(Tk):
         self.cooldown_time = 10
         self.unk_pos = 0
         self.raw_img = 0
+        self.view_temp = 0
 
         self.modelList = self.fileHandler.getListLocalModels()
         self.objCount = self.fileHandler.getCount()
@@ -506,10 +506,10 @@ class clientGUI(Tk):
 
         self.__buildGUI(VERSION)
 
-    
     ############### private Function #############################
     def __buildGUI(self,VERSION):
         self.__loadGUIphoto()
+        self.view_temp = clientGUI.__allImages['screen_img']
         self.selected_model = StringVar(self)
         self.selected_model.set(self.fileHandler.getCurrentModel())
 
@@ -712,7 +712,6 @@ class clientGUI(Tk):
                 send_one = threading.Thread(target=self.yoloServer.unknown)
                 send_one.start()
                 self.__time_cooldown()
-
     #view mode process
     def __getUnknownRes(self):
         for i in self.yoloServer.UnknownResult():
@@ -730,6 +729,7 @@ class clientGUI(Tk):
             if self.unk_pos < 0:
                 self.unk_pos = len(self.unknown_res)-1
             self.__base64ToImageTk()
+            clientGUI.__allWidgets['screen'].configure(image=self.view_temp)
     def __swipeRight(self,*kw):
         if self.activate_view :
             print('going Right')
@@ -737,11 +737,12 @@ class clientGUI(Tk):
             if self.unk_pos > len(self.unknown_res)-1 :
                 self.unk_pos = 0
             self.__base64ToImageTk()
+            clientGUI.__allWidgets['screen'].configure(image=self.view_temp)
     def __base64ToImageTk(self):
         buff = BytesIO(self.unknown_res[self.unk_pos])
         result = Image.open(buff).resize((480,360))
-        res2 = ImageTk.PhotoImage(image=result)
-        clientGUI.__allWidgets['screen'].configure(image=buff)
+        res2 = ImageTk.PhotoImage(image=result,master=self,size=(480,360))
+        self.view_temp = res2
     #capture mode process
     def __cv2ToImageTk(self,frame):
         imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
@@ -759,7 +760,7 @@ class clientGUI(Tk):
                 cap_cam.release()
                 break
     def __sendRawImage(self):
-        info = self.fileHandler.getUserInfo()
+        _,info = self.fileHandler.getUserInfo()
         raw_path = self.fileHandler.getRawPath()
         all_raw = self.fileHandler.getAllRaw()
 
@@ -768,7 +769,8 @@ class clientGUI(Tk):
                 self.yoloServer.send_raw1(info['factory'],raw_path,raw)
                 clientGUI.__allWidgets.get('log').ok_msg(raw+' had been sent to YOLO-server (%s/%s)' 
                     %(str(idx+1),str(len(all_raw))))
-            except:
+            except Exception as e:
+                print(e)
                 clientGUI.__allWidgets.get('log').error_msg('an Error occured while sending '+raw+
                     ' to YOLO-server (%s/%s)' %(str(idx+1),str(len(all_raw))))
     def __activateRawImage(self,*kw):
@@ -877,10 +879,6 @@ class clientGUI(Tk):
             clientGUI.__allWidgets['view'].configure(state='normal')
             clientGUI.__allWidgets['screen'].configure(image=clientGUI.__allImages['screen_img'])
             clientGUI.__allWidgets.get('log').info_msg('////////// CAPTURE MODE END //////////')
-    def __thread_cap_btn(self):
-        task = threading.Thread(target=self.__cap_btn)
-        task.start()
-    
     #Public function
     def pre_start(self):
         #pre_load_1 = threading.Thread(target=self.__checkServer)

@@ -113,8 +113,8 @@ This is part of the final project of computer engineering at Thammsart Universit
 | :white_check_mark: | Swap a new model | :white_check_mark: | register to YOLO-server |
 | :white_check_mark: | send unknown | :white_check_mark: | swiping in view mode |
 | :white_check_mark: | one click capture | :white_check_mark: | send unknown |
-| :white_check_mark: | file handling | :hourglass: | test connection |
-| :hourglass: | get unknown result | :hourglass: | view mode |
-| :hourglass: | capture mode | :x: | something else |
+| :white_check_mark: | file handling | :white_check_mark: | test connection |
+| :white_check_mark: | get unknown result | :white_check_mark: | view mode |
+| :white_check_mark: | capture mode | :hourglass: | Friendly-UI |
 
 <img src="https://i.imgur.com/VkV3hD4.png" width="75%">
