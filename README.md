@@ -111,9 +111,10 @@ This is part of the final project of computer engineering at Thammsart Universit
 | :white_check_mark: | login to YOLO-server | :white_check_mark: | folder & file for GUI |
 | :white_check_mark: | list all Model (Local&Sever) | :white_check_mark: | download server model |
 | :white_check_mark: | Swap a new model | :white_check_mark: | register to YOLO-server |
+| :white_check_mark: | send unknown | :white_check_mark: | swiping in view mode |
+| :white_check_mark: | one click capture | :white_check_mark: | send unknown |
 | :hourglass: | file handling | :hourglass: | test connection |
-| :hourglass: | send unknown | :hourglass: | get unknown result |
-| :hourglass: | view mode |  |  |
-| :x: | something else | :x: | capture Mode |
+| :hourglass: | get unknown result | :hourglass: | view mode |
+| :hourglass: | capture mode | :x: | something else |
 
 <img src="https://i.imgur.com/VkV3hD4.png" width="75%">

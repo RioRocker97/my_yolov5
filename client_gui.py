@@ -1,4 +1,4 @@
-import threading,cv2,os,time,pycurl,json,base64
+import threading,cv2,os,time,pycurl,json,base64,shutil
 from platform import system
 from PIL import Image,ImageTk
 from io import BytesIO
@@ -12,7 +12,7 @@ from mygui_detect import prepareYolo,runYolo
 ###### Status Variable #########
 IS_VDO_CREATED = False
 IS_VDO_STOP = False
-UNKNOWN_AVAILABLE = False
+UNKNOWN_AVAILABLE = True
 ###### Status Variable #########
 ###### Regular Variable #########
 OBJ_COUNT = {
@@ -44,8 +44,9 @@ class useYOLOserver():
                 self.api.close()
                 self.rep.close()
                 return True
-        except:
+        except Exception as e:
             print("error at calling API (Test-Server)")
+            print(type(e))
             return False
     def login(self,user,pas):
         self.rep = BytesIO()
@@ -63,7 +64,6 @@ class useYOLOserver():
                 print("Login success !")
                 body = json.loads(self.rep.getvalue())
                 self.token = body['token']
-                print('at login: '+self.token)
             elif(str(self.api.getinfo(pycurl.HTTP_CODE)) == '401'):
                 print('Bad Login. Are you unregister ?')
             else:
@@ -170,13 +170,12 @@ class useYOLOserver():
             self.rep.close()
     def getServerModel(self,list_model=[]):
         list_model.append('/// SERVER ///')
-        print('at getServer: '+self.token)
         self.rep = BytesIO()
         self.api = pycurl.Curl()
         self.api.setopt(pycurl.URL,self.server+"/api/listModel")
         self.api.setopt(pycurl.WRITEDATA,self.rep)
         self.api.setopt(pycurl.HTTPHEADER,
-        ["APK_TOKEN:"+ self.token])
+        ["API_TOKEN:"+ self.token])
         t0 = time.time()
         # will do API's respone handling later
         try:
@@ -474,7 +473,7 @@ class clientGUI(Tk):
     __allImages = {}
     __allWidgets = {
         #'log' : clientLog(),
-        #'screen' : Label(),
+        #'screen-border' : Label(),
         #'detect' : Button(),
         #'detect_isOn' : Label(),
         #'model': Combobox()
@@ -490,6 +489,7 @@ class clientGUI(Tk):
         self.yoloServer = useYOLOserver(server=server)
         self.unknown_res = list()
         self.cooldown_time = 10
+        self.unk_pos = 0
 
         self.modelList = self.fileHandler.getListLocalModels()
         self.objCount = self.fileHandler.getCount()
@@ -513,6 +513,7 @@ class clientGUI(Tk):
         # build components (text,button,log,screen ETC.)
         clientGUI.__allWidgets['count'] = Label(self,text="Today Count : "+str(self.objCount))
         clientGUI.__allWidgets['screen'] = Label(self,image=clientGUI.__allImages['screen_img'])
+        clientGUI.__allWidgets['screen-border'] = Label(self,image=clientGUI.__allImages['green_border'])
         clientGUI.__allWidgets['log'] = clientLog(self,borderwidth=10)
         clientGUI.__allWidgets['detect'] = Button(self,command=self.__detect_btn,image=clientGUI.__allImages['detect'])
         clientGUI.__allWidgets['view'] = Button(self,command=self.__view_btn,image=clientGUI.__allImages['view'])
@@ -590,21 +591,25 @@ class clientGUI(Tk):
         clientGUI.__allImages['isError'] = ImageTk.PhotoImage(Image.new('RGB',(64,20),'#FF4500'),master=self)
         clientGUI.__allImages['isOff'] = ImageTk.PhotoImage(Image.new('RGB',(64,20)),master=self)
         clientGUI.__allImages['Register'] = ImageTk.PhotoImage(Image.open("gui_data/register.png").resize((50,120)),master=self)
+        clientGUI.__allImages['green_border'] = ImageTk.PhotoImage(Image.open("gui_data/blk_grn.jpg").resize((7,360)),master=self)
     def __checkLogin(self):
-        if self.regis_status :
-            self.yoloServer.login(user=self.user_info['user'],pas=self.user_info['pass'])
-            self.modelList = self.yoloServer.getServerModel(self.modelList)
-            clientGUI.__allWidgets['model']['values'] = self.modelList
-        else :
-            clientGUI.__allWidgets['log'].error_msg('!!!! Unregistered Device !!!!')
-            clientGUI.__allWidgets['log'].error_msg('Device must be registerd to gain access to YOLO-Server')
-            clientGUI.__allWidgets['log'].error_msg('!!!! Unregistered Device !!!!')
+        if self.__checkServer() :
+            if self.regis_status :
+                self.yoloServer.login(user=self.user_info['user'],pas=self.user_info['pass'])
+                self.modelList = self.yoloServer.getServerModel(self.modelList)
+                clientGUI.__allWidgets['model']['values'] = self.modelList
+            else :
+                clientGUI.__allWidgets['log'].error_msg('!!!! Unregistered Device !!!!')
+                clientGUI.__allWidgets['log'].error_msg('Device must be registerd to gain access to YOLO-Server')
+                clientGUI.__allWidgets['log'].error_msg('!!!! Unregistered Device !!!!')
     def __checkServer(self):
         if self.yoloServer.test_server() :
             clientGUI.__allWidgets['log'].info_msg('YOLO-server is up and running')
+            return True
         else :
             clientGUI.__allWidgets['log'].info_msg('YOLO-server is down')
             clientGUI.__allWidgets['log'].warn_msg('Check your internet connection and restart YOLO-client')
+            return False
     # detect mode process
     def __detectProcess(self):
         global IS_VDO_CREATED,IS_VDO_STOP
@@ -647,6 +652,9 @@ class clientGUI(Tk):
     def __swapModelYOLO(self,*kw):
         selected = self.selected_model.get()
         if selected != "/// LOCAL ///" and selected != "/// SERVER ///"  :
+            clientGUI.__allWidgets.get('detect').config(state='disabled')
+            clientGUI.__allWidgets.get('detect_isOn').configure(image=clientGUI.__allImages['isWarn'])
+            clientGUI.__allWidgets['model'].config(state='disabled')
             if not self.fileHandler.checkModel(selected):
                 top = "New Server Model Selected !!!"
                 msg = "Do you want to download %s from YOLO-server ?" % selected
@@ -660,6 +668,9 @@ class clientGUI(Tk):
                 else:
                     print("New Model not found .Using old one instead")
                     self.selected_model.set(self.fileHandler.getCurrentModel())
+                    clientGUI.__allWidgets.get('detect').config(state='normal')
+                    clientGUI.__allWidgets['model'].config(state='readonly')
+                    clientGUI.__allWidgets.get('detect_isOn').configure(image=clientGUI.__allImages['isOff'])
             else:
                 self.__swapModelMSG(selected)
     def __swapModelMSG(self,selected):
@@ -673,37 +684,74 @@ class clientGUI(Tk):
         else:
             print('model swap cancel. using old one instead')
             self.selected_model.set(self.fileHandler.getCurrentModel())
+            clientGUI.__allWidgets.get('detect').config(state='normal')
+            clientGUI.__allWidgets['model'].config(state='readonly')
+            clientGUI.__allWidgets.get('detect_isOn').configure(image=clientGUI.__allImages['isOff'])
     def __time_cooldown(self):
-        global UNKNOWN_AVAILABLE,IS_VDO_STOP
-        while not IS_VDO_STOP: 
-            clientGUI.__allWidgets['log'].info_msg("unknown found ! Begin to cooldown...")
-            time.sleep(self.cooldown_time)
-            UNKNOWN_AVAILABLE  = True
-            clientGUI.__allWidgets['log'].info_msg("cooldown over . getting new unknown...")
+        global UNKNOWN_AVAILABLE
+        clientGUI.__allWidgets['log'].info_msg("unknown found ! Begin to cooldown...")
+        time.sleep(self.cooldown_time)
+        UNKNOWN_AVAILABLE  = True
+        clientGUI.__allWidgets['log'].info_msg("cooldown over . getting new unknown...")
     def __time_trigger(self):
         global UNKNOWN_AVAILABLE,IS_VDO_STOP
         unknown_path = self.fileHandler.getUnknownPath()
         self.yoloServer.prepareUnknown(unknown_path)
         server_status = self.yoloServer.test_server()
-        num =0
-        while not IS_VDO_STOP and server_status:
+        while not IS_VDO_STOP :
             if os.path.exists(unknown_path) and UNKNOWN_AVAILABLE:
                 UNKNOWN_AVAILABLE = False
                 send_one = threading.Thread(target=self.yoloServer.unknown)
                 send_one.start()
                 self.__time_cooldown()
 
-
+    #view mode process
+    def __getUnknownRes(self):
+        for i in self.yoloServer.UnknownResult():
+            self.unknown_res.append(i)
+    def __hoverIn(self,*kw):
+        self.activate_view = True
+        clientGUI.__allWidgets['screen-border'].place(relx=0.001,rely=0.1)
+        #clientGUI.__allWidgets['screen'].configure(image=clientGUI.__allImages['green_border'])
+    def __hoverOut(self,*kw):
+        self.activate_view = False
+        clientGUI.__allWidgets['screen-border'].place_forget()
+        #clientGUI.__allWidgets['screen'].configure(image=clientGUI.__allImages['screen_img'])
+    def __swipeLeft(self,*kw):
+        if self.activate_view :
+            print('going left')
+            self.unk_pos-=1
+            if self.unk_pos < 0:
+                self.unk_pos = len(self.unknown_res)-1
+            self.__base64ToImageTk()
+    def __swipeRight(self,*kw):
+        if self.activate_view :
+            print('going Right')
+            self.unk_pos+=1
+            if self.unk_pos > len(self.unknown_res)-1 :
+                self.unk_pos = 0
+            self.__base64ToImageTk()
+    def __base64ToImageTk(self):
+        buff = BytesIO(self.unknown_res[self.unk_pos])
+        result = Image.open(buff).resize((480,360))
+        res2 = ImageTk.PhotoImage(image=result)
+        clientGUI.__allWidgets['screen'].configure(image=buff)
+    #capture mode process
+    def __getRawImage(self,*kw):
+        if self.activate_view:
+            print('get this image save ')
+    #other process
     def __clear_mode(self):
         clientGUI.__allWidgets.get('detect_isOn').configure(image=clientGUI.__allImages.get('isOff'))
         clientGUI.__allWidgets.get('view_isOn').configure(image=clientGUI.__allImages.get('isOff'))
         clientGUI.__allWidgets.get('cap_isOn').configure(image=clientGUI.__allImages.get('isOff'))
+        clientGUI.__allWidgets['model'].config(state='disabled')
     def __swap_mode(self,btn,btn_status):
         if btn_status:
             btn.configure(image=clientGUI.__allImages.get('isOn'))
         else :
             btn.configure(image=clientGUI.__allImages.get('isOff'))
-    def __chang_mode_color(self,btn,status=''):
+    def __change_mode_color(self,btn,status=''):
         status = status.lower()
         if status == 'on':
             btn.configure(image=clientGUI.__allImages.get('isOn'))
@@ -719,7 +767,7 @@ class clientGUI(Tk):
         self.__clear_mode()
         clientGUI.__allModes['detect'] = not clientGUI.__allModes['detect']
         self.__swap_mode(clientGUI.__allWidgets['detect_isOn'],clientGUI.__allModes['detect'])
-
+        clientGUI.__allWidgets['model'].config(state='readonly')
         if IS_VDO_CREATED :
             if clientGUI.__allModes['detect']:
                 task = threading.Thread(target=self.__detectProcess)
@@ -731,24 +779,72 @@ class clientGUI(Tk):
                 task.start()
     def __view_btn(self):
         self.__clear_mode()
-        clientGUI.__allWidgets.get('view_isOn').configure(image=clientGUI.__allImages.get('isOn'))
-        clientGUI.__allWidgets.get('log').info_msg('////////// VIEW MODE //////////')
+        clientGUI.__allModes['view'] = not clientGUI.__allModes['view']
+        if clientGUI.__allModes['view']:
+            clientGUI.__allWidgets.get('view_isOn').configure(image=clientGUI.__allImages.get('isOn'))
+            clientGUI.__allWidgets.get('log').info_msg('////////// VIEW MODE //////////')
+            clientGUI.__allWidgets.get('log').info_msg('Hover around on black screen to activate swiping')
+            clientGUI.__allWidgets.get('log').info_msg(' <<< Left Click || Right Click >>')
+
+            self.__getUnknownRes()
+            clientGUI.__allWidgets.get('log').ok_msg('There are %i images for unknown result' % len(self.unknown_res))
+
+            clientGUI.__allWidgets['screen'].bind('<Enter>',self.__hoverIn)
+            clientGUI.__allWidgets['screen'].bind('<Leave>',self.__hoverOut)
+            clientGUI.__allWidgets['screen'].bind('<Button-1>',self.__swipeLeft)
+            clientGUI.__allWidgets['screen'].bind('<Button-3>',self.__swipeRight)
+            clientGUI.__allWidgets['detect'].configure(state='disabled')
+            clientGUI.__allWidgets['cap'].configure(state='disabled')
+        else :
+            clientGUI.__allWidgets['screen'].unbind('<Enter>')
+            clientGUI.__allWidgets['screen'].unbind('<Leave>')
+            clientGUI.__allWidgets['screen'].unbind('<Button-1>')
+            clientGUI.__allWidgets['screen'].unbind('<Button-3>')
+            clientGUI.__allWidgets['detect'].configure(state='normal')
+            clientGUI.__allWidgets['cap'].configure(state='normal')
+            clientGUI.__allWidgets.get('log').info_msg('////////// VIEW MODE END //////////')
     def __cap_btn(self):
         self.__clear_mode()
-        clientGUI.__allWidgets.get('cap_isOn').configure(image=clientGUI.__allImages.get('isOn'))
-        clientGUI.__allWidgets.get('log').info_msg('////////// CAPTURE MODE //////////')
+        clientGUI.__allModes['capture'] = not clientGUI.__allModes['capture']
 
+        if clientGUI.__allModes['capture']:
+            clientGUI.__allWidgets.get('cap_isOn').configure(image=clientGUI.__allImages.get('isOn'))
+            clientGUI.__allWidgets.get('log').info_msg('////////// CAPTURE MODE //////////')
+            clientGUI.__allWidgets.get('log').info_msg('Hover around on black screen to activate on-screen click')
+            clientGUI.__allWidgets.get('log').info_msg('Left Click to capture raw image')
+
+            clientGUI.__allWidgets['screen'].bind('<Enter>',self.__hoverIn)
+            clientGUI.__allWidgets['screen'].bind('<Leave>',self.__hoverOut)
+            clientGUI.__allWidgets['screen'].bind('<Button-1>',self.__getRawImage)
+            clientGUI.__allWidgets['detect'].configure(state='disabled')
+            clientGUI.__allWidgets['view'].configure(state='disabled')
+        else :
+            clientGUI.__allWidgets['screen'].unbind('<Enter>')
+            clientGUI.__allWidgets['screen'].unbind('<Leave>')
+            clientGUI.__allWidgets['screen'].unbind('<Button-1>')
+            clientGUI.__allWidgets['detect'].configure(state='normal')
+            clientGUI.__allWidgets['view'].configure(state='normal')
+            clientGUI.__allWidgets.get('log').info_msg('////////// CAPTURE MODE END //////////')
+
+    def __clearUnknown(self):
+        if os.path.exists("./unknown") :
+            shutil.rmtree("./unknown")
+        os.makedirs("./unknown")
+        if os.path.exists("./unknown/raw") :
+            shutil.rmtree("./unknown/raw")
+        os.makedirs("./unknown/raw")
     #Public function
     def pre_start(self):
-        #pre_load_2 = threading.Thread(target=self.__checkLogin)
-        #pre_load_2.start()
-        pre_load_1 = threading.Thread(target=self.__checkServer)
-        pre_load_1.start()
+        self.__clearUnknown()
+        #pre_load_1 = threading.Thread(target=self.__checkServer)
+        #pre_load_1.start()
+        pre_load_2 = threading.Thread(target=self.__checkLogin)
+        pre_load_2.start()
         pre_load_3 = threading.Thread(target=self.__loadModel)
         pre_load_3.start()
         main_gui = threading.Thread(target=self.mainloop())
         main_gui.start()
 
-def runApp(ver,ser):
+def runApp(ver,ser='127.0.0.1'):
     program = clientGUI(ver,ser)
     program.pre_start()
