@@ -1,3 +1,4 @@
 from client_gui import runApp
-
-runApp("1.7.4 Beta")
+#from mygui_app import yolo_client
+runApp("1.7.5 Beta")
+#yolo_client()

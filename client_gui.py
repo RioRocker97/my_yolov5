@@ -133,9 +133,7 @@ class useYOLOserver():
             self.api.close()
             self.rep.close()
             os.remove(self.unknown_path)
-    def send_raw1(self,token,info):
-        save_path = 'filepath'
-        raw = 'filename'
+    def send_raw1(self,info,save_path,raw):
         total_time = 0
         # will do file handling later
         self.rep = BytesIO()
@@ -147,7 +145,7 @@ class useYOLOserver():
             ])
         self.api.setopt(pycurl.HTTPHEADER,
             ["Content-Type: multipart/form-data",
-            "API_TOKEN:"+ token,
+            "API_TOKEN:"+ self.token,
             "FACTORY:"+ info,
             "OBJ-NAME:"+"something"
             ])
@@ -158,13 +156,12 @@ class useYOLOserver():
             self.api.perform()
             total_time = time.time()-t0
             if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
-                print("Login success !")
-                body = json.loads(self.rep.getvalue())
-                self.token = body['token']
+                print("Send Raw Image Success !")
+                os.remove(save_path+raw)
             else:
                 print("Server is DOWN !")
         except:
-            print("error at calling API")
+            print("error at calling API (send raw)")
         else:
             self.api.close()
             self.rep.close()
@@ -256,6 +253,12 @@ class clientFileData():
         }
         self.currModelPath = "./mine/cap_unk.pt"
         self.currModel = "cap_unk"
+
+        if os.path.exists(self.folder['UnknownData']) :
+            shutil.rmtree(self.folder['UnknownData'])
+        if os.path.exists(self.folder['RawData']) :
+            shutil.rmtree(self.folder['RawData'])
+
         for path in self.folder:
             if not os.path.exists(self.folder[path]):
                 print(path+' Folder not found. creating new one')
@@ -303,7 +306,11 @@ class clientFileData():
         return self.folder['ModelData']
     def getUnknownPath(self):
         return self.folder['UnknownData']+"new_unknown.jpg"
-
+    def getRawPath(self):
+        return self.folder['RawData']
+    def getAllRaw(self):
+        return os.listdir(self.folder['RawData'])
+    
     def getCount(self):
         count_file =open(self.all_file['count'])
         if count_file.read() == '':
@@ -390,7 +397,7 @@ class clientLog(scrolledtext.ScrolledText):
     def __init__(self, master=None, **kw):
         super().__init__(master=master, **kw)
 
-        self.configure(font=('TkFixedFont',12),background="black")
+        self.configure(font=('TkFixedFont',10),background="black")
         self.tag_config(clientLog.INFO,foreground='#15A0CA')
         self.tag_config(clientLog.WARN,foreground='#DE9B00')
         self.tag_config(clientLog.ERROR,foreground='#DA3C15')
@@ -490,6 +497,7 @@ class clientGUI(Tk):
         self.unknown_res = list()
         self.cooldown_time = 10
         self.unk_pos = 0
+        self.raw_img = 0
 
         self.modelList = self.fileHandler.getListLocalModels()
         self.objCount = self.fileHandler.getCount()
@@ -591,7 +599,7 @@ class clientGUI(Tk):
         clientGUI.__allImages['isError'] = ImageTk.PhotoImage(Image.new('RGB',(64,20),'#FF4500'),master=self)
         clientGUI.__allImages['isOff'] = ImageTk.PhotoImage(Image.new('RGB',(64,20)),master=self)
         clientGUI.__allImages['Register'] = ImageTk.PhotoImage(Image.open("gui_data/register.png").resize((50,120)),master=self)
-        clientGUI.__allImages['green_border'] = ImageTk.PhotoImage(Image.open("gui_data/blk_grn.jpg").resize((7,360)),master=self)
+        clientGUI.__allImages['green_border'] = ImageTk.PhotoImage(Image.new('RGB',(7,360),'#7CFC00'),master=self)
     def __checkLogin(self):
         if self.__checkServer() :
             if self.regis_status :
@@ -712,11 +720,9 @@ class clientGUI(Tk):
     def __hoverIn(self,*kw):
         self.activate_view = True
         clientGUI.__allWidgets['screen-border'].place(relx=0.001,rely=0.1)
-        #clientGUI.__allWidgets['screen'].configure(image=clientGUI.__allImages['green_border'])
     def __hoverOut(self,*kw):
         self.activate_view = False
         clientGUI.__allWidgets['screen-border'].place_forget()
-        #clientGUI.__allWidgets['screen'].configure(image=clientGUI.__allImages['screen_img'])
     def __swipeLeft(self,*kw):
         if self.activate_view :
             print('going left')
@@ -737,9 +743,50 @@ class clientGUI(Tk):
         res2 = ImageTk.PhotoImage(image=result)
         clientGUI.__allWidgets['screen'].configure(image=buff)
     #capture mode process
+    def __cv2ToImageTk(self,frame):
+        imageVDO = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+        imageVDO2 = Image.fromarray(imageVDO).resize((480,360))
+        imageVDO3 = ImageTk.PhotoImage(image=imageVDO2)
+        clientGUI.__allWidgets['screen'].configure(image=imageVDO3)
+        clientGUI.__allWidgets['screen'].update()
+        self.raw_img = imageVDO2
+    def __capture_VDO(self):
+        cap_cam = cv2.VideoCapture(0)
+        while True:
+            _,frame = cap_cam.read()
+            self.__cv2ToImageTk(frame)
+            if not clientGUI.__allModes['capture'] or cv2.waitKey(1) & 0xFF == ord('x'):
+                cap_cam.release()
+                break
+    def __sendRawImage(self):
+        info = self.fileHandler.getUserInfo()
+        raw_path = self.fileHandler.getRawPath()
+        all_raw = self.fileHandler.getAllRaw()
+
+        for idx,raw in enumerate(all_raw):
+            try:
+                self.yoloServer.send_raw1(info['factory'],raw_path,raw)
+                clientGUI.__allWidgets.get('log').ok_msg(raw+' had been sent to YOLO-server (%s/%s)' 
+                    %(str(idx+1),str(len(all_raw))))
+            except:
+                clientGUI.__allWidgets.get('log').error_msg('an Error occured while sending '+raw+
+                    ' to YOLO-server (%s/%s)' %(str(idx+1),str(len(all_raw))))
+    def __activateRawImage(self,*kw):
+        task = threading.Thread(target=self.__sendRawImage)
+        task.start()
+    def __capture_one(self,name='something'):
+        save_path =self.fileHandler.getRawPath()
+        num = len(os.listdir(save_path))+1
+        self.raw_img.save(save_path+name+'_'+str(num)+'.jpg')
+        clientGUI.__allWidgets.get('log').ok_msg("New raw image saved ! (%s/50)" % str(num))
+        if num==50 :
+            clientGUI.__allWidgets.get('log').warn_msg("There already enough raw images to be used.")
+            clientGUI.__allWidgets.get('log').ok_msg("Hover around on black screen to send raw images")
+            clientGUI.__allWidgets.get('log').ok_msg("Right Click to send raw images")
+            clientGUI.__allWidgets['screen'].bind('<Button-3>',self.__activateRawImage)
     def __getRawImage(self,*kw):
         if self.activate_view:
-            print('get this image save ')
+            self.__capture_one()
     #other process
     def __clear_mode(self):
         clientGUI.__allWidgets.get('detect_isOn').configure(image=clientGUI.__allImages.get('isOff'))
@@ -802,6 +849,7 @@ class clientGUI(Tk):
             clientGUI.__allWidgets['screen'].unbind('<Button-3>')
             clientGUI.__allWidgets['detect'].configure(state='normal')
             clientGUI.__allWidgets['cap'].configure(state='normal')
+            clientGUI.__allWidgets['screen'].configure(image=clientGUI.__allImages['screen_img'])
             clientGUI.__allWidgets.get('log').info_msg('////////// VIEW MODE END //////////')
     def __cap_btn(self):
         self.__clear_mode()
@@ -810,7 +858,7 @@ class clientGUI(Tk):
         if clientGUI.__allModes['capture']:
             clientGUI.__allWidgets.get('cap_isOn').configure(image=clientGUI.__allImages.get('isOn'))
             clientGUI.__allWidgets.get('log').info_msg('////////// CAPTURE MODE //////////')
-            clientGUI.__allWidgets.get('log').info_msg('Hover around on black screen to activate on-screen click')
+            clientGUI.__allWidgets.get('log').info_msg('Hover around on display screen to activate on-screen click')
             clientGUI.__allWidgets.get('log').info_msg('Left Click to capture raw image')
 
             clientGUI.__allWidgets['screen'].bind('<Enter>',self.__hoverIn)
@@ -818,24 +866,23 @@ class clientGUI(Tk):
             clientGUI.__allWidgets['screen'].bind('<Button-1>',self.__getRawImage)
             clientGUI.__allWidgets['detect'].configure(state='disabled')
             clientGUI.__allWidgets['view'].configure(state='disabled')
+
+            self.__capture_VDO()
         else :
             clientGUI.__allWidgets['screen'].unbind('<Enter>')
             clientGUI.__allWidgets['screen'].unbind('<Leave>')
             clientGUI.__allWidgets['screen'].unbind('<Button-1>')
+            clientGUI.__allWidgets['screen'].unbind('<Button-3>')
             clientGUI.__allWidgets['detect'].configure(state='normal')
             clientGUI.__allWidgets['view'].configure(state='normal')
+            clientGUI.__allWidgets['screen'].configure(image=clientGUI.__allImages['screen_img'])
             clientGUI.__allWidgets.get('log').info_msg('////////// CAPTURE MODE END //////////')
-
-    def __clearUnknown(self):
-        if os.path.exists("./unknown") :
-            shutil.rmtree("./unknown")
-        os.makedirs("./unknown")
-        if os.path.exists("./unknown/raw") :
-            shutil.rmtree("./unknown/raw")
-        os.makedirs("./unknown/raw")
+    def __thread_cap_btn(self):
+        task = threading.Thread(target=self.__cap_btn)
+        task.start()
+    
     #Public function
     def pre_start(self):
-        self.__clearUnknown()
         #pre_load_1 = threading.Thread(target=self.__checkServer)
         #pre_load_1.start()
         pre_load_2 = threading.Thread(target=self.__checkLogin)

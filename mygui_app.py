@@ -54,8 +54,8 @@ get_unknown_now = True
 view_mode = False
 capture_mode = False
 MODEL_PATH = "./mine/cap_unk.pt"
-server_path = "http://riorocker97.com"
-#server_path = "127.0.0.1"
+#server_path = "http://riorocker97.com"
+server_path = "127.0.0.1"
 VERSION = "v1.5.1"
 selected_model = tkinter.StringVar()
 selected_raw_image = Image.new(mode="RGB",size=(480,360))
