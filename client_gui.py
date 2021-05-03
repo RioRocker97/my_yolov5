@@ -76,16 +76,17 @@ class clientGUI(Tk):
         clientGUI.__allWidgets['model'].bind('<<ComboboxSelected>>',self.__swapModelYOLO)
         clientGUI.__allWidgets['user_info'] = clientUserInfo(
             self,
-            text="Device Info",
             isDeviceRegister=self.regis_status,
             userInfo=self.user_info,
             register_img = clientGUI.__allImages['Register'],
             api = self.yoloServer,
             filehandler= self.fileHandler
             )
+        clientGUI.__allWidgets['cap_obj'] = input_box(self,'Object Name')
         
         # config style 
         clientGUI.__allWidgets['count'].config(font=('tahoma',24))
+        clientGUI.__allWidgets['cap_obj'].config(font=('tahoma',18))
         #suggestion_label.config(font=('tahoma',20))
         clientGUI.__allWidgets['model'].configure(width="15",font=("tahoma",18))
 
@@ -102,7 +103,7 @@ class clientGUI(Tk):
         clientGUI.__allWidgets['cap_isOn'].place(relx=0.90,rely=0.13)
 
         clientGUI.__allWidgets['model'].place(relx=0.68,rely=0.2)
-        #suggestion_label.place(relx=0.65,rely=0.3)
+        clientGUI.__allWidgets['cap_obj'].place_forget()
 
         clientGUI.__allWidgets['log'].place(relx=0.01,rely=0.72,width=500,height=150)
         clientGUI.__allWidgets['user_info'].place(relx=0.64,rely=0.72,width=280,height=150) 
@@ -305,7 +306,6 @@ class clientGUI(Tk):
         _,info = self.fileHandler.getUserInfo()
         raw_path = self.fileHandler.getRawPath()
         all_raw = self.fileHandler.getAllRaw()
-
         for idx,raw in enumerate(all_raw):
             try:
                 self.yoloServer.send_raw1(info['factory'],raw_path,raw)
@@ -321,7 +321,11 @@ class clientGUI(Tk):
     def __capture_one(self,name='something'):
         save_path =self.fileHandler.getRawPath()
         num = len(os.listdir(save_path))+1
-        self.raw_img.save(save_path+name+'_'+str(num)+'.jpg')
+        new_name = clientGUI.__allWidgets['cap_obj'].get()
+        if new_name == '' or new_name == 'Object Name':
+            self.raw_img.save(save_path+'Blank_'+str(num)+'.jpg')
+        else :
+            self.raw_img.save(save_path+new_name+'_'+str(num)+'.jpg')
         clientGUI.__allWidgets.get('log').ok_msg("New raw image saved ! (%s/50)" % str(num))
         if num==50 :
             clientGUI.__allWidgets.get('log').warn_msg("There already enough raw images to be used.")
@@ -411,6 +415,8 @@ class clientGUI(Tk):
             clientGUI.__allWidgets['detect'].configure(state='disabled')
             clientGUI.__allWidgets['view'].configure(state='disabled')
 
+            clientGUI.__allWidgets['cap_obj'].place(relx=0.63,rely=0.4)
+
             self.__capture_VDO()
         else :
             clientGUI.__allWidgets['screen'].unbind('<Enter>')
@@ -420,11 +426,11 @@ class clientGUI(Tk):
             clientGUI.__allWidgets['detect'].configure(state='normal')
             clientGUI.__allWidgets['view'].configure(state='normal')
             clientGUI.__allWidgets['screen'].configure(image=clientGUI.__allImages['screen_img'])
+
+            clientGUI.__allWidgets['cap_obj'].place_forget()
             clientGUI.__allWidgets.get('log').info_msg('////////// CAPTURE MODE END //////////')
     #Public function
-    def pre_start(self):
-        #pre_load_1 = threading.Thread(target=self.__checkServer)
-        #pre_load_1.start()
+    def pre_start(self,removeTextFile = False):
         pre_load_2 = threading.Thread(target=self.__checkLogin)
         pre_load_2.start()
         pre_load_3 = threading.Thread(target=self.__loadModel)

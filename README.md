@@ -115,6 +115,6 @@ This is part of the final project of computer engineering at Thammsart Universit
 | :white_check_mark: | one click capture | :white_check_mark: | send unknown |
 | :white_check_mark: | file handling | :white_check_mark: | test connection |
 | :white_check_mark: | get unknown result | :white_check_mark: | view mode |
-| :white_check_mark: | capture mode | :hourglass: | Friendly-UI |
+| :white_check_mark: | capture mode | :white_check_mark: | Friendly-UI |
 
 <img src="https://i.imgur.com/VkV3hD4.png" width="75%">

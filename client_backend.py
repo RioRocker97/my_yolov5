@@ -77,7 +77,7 @@ class useYOLOserver():
             self.api.perform()
             print("Time used: %.2f" % (time.time()-t0))
             if(str(self.api.getinfo(pycurl.HTTP_CODE)) == '200'):
-                print("Register success !")
+                print("Register success .")
             else:
                 print("Server is DOWN !")
         except:
@@ -128,7 +128,7 @@ class useYOLOserver():
             ["Content-Type: multipart/form-data",
             "API_TOKEN:"+ self.token,
             "FACTORY:"+ info,
-            "OBJ-NAME:"+"something"
+            "OBJ-NAME:"+raw.split('_')[0]
             ])
         self.api.setopt(pycurl.WRITEDATA,self.rep)
         t0 = time.time()
@@ -326,6 +326,7 @@ class clientFileData():
         user_file.write(info['user']+"\n")
         user_file.write(info['pass']+"\n")
         user_file.close()
+
 #input box with placeholder
 class input_box(Entry):
     def __init__(self, master=None,placeholder='',isPassword=False,**kw):
@@ -360,10 +361,13 @@ class input_box(Entry):
             self.value = self.get()
             self.config(fg="#228B22")   
     def __enter_pass(self,*kw):
+        if self.get() != self.value or self.get() != 'Password':
+            self.delete('0','end')
         self.config(show='')
     def __leave_pass(self,*kw):
         self.__leave()
         if self.get() != '' and self.get() != 'Password':
+            self.config(fg="#228B22") 
             self.config(show='#')
     def __leave(self,*kw):
         self.value = self.get()
@@ -406,24 +410,14 @@ class clientUserInfo(LabelFrame):
         self.api = api
         self.fileHandler = filehandler
         if isDeviceRegister:
-            factory = Label(self,text=self.userInfo['factory'])
-            deviceID = Label(self,text=self.userInfo['user'])
-            server_status = Label(self,text="YOLO-Server : Online")
-
-            factory.config(font=('tahoma',14))
-            deviceID.config(font=('tahoma',14))
-            server_status.config(font=('tahoma',14))
-
-            factory.place(relx=0.02,rely=0.01)
-            deviceID.place(relx=0.02,rely=0.2)
-            server_status.place(relx=0.02,rely=0.4)
+            self.__makeFrame()
         else:
             self.config(text='!!! Unregistered !!!')
 
             self.factory = input_box(self,'Factory Name')
             self.device = input_box(self,'Device Name')
             self.secret = input_box(self,'Password',True)
-            register_btn = Button(self,image=register_img,command=self.__doRegister)
+            self.register_btn = Button(self,image=register_img,command=self.__doRegister)
 
             self.factory.config(font=('tahoma',14))
             self.device.config(font=('tahoma',14))
@@ -432,7 +426,7 @@ class clientUserInfo(LabelFrame):
             self.factory.place(relx=0.02,rely=0.1)
             self.device.place(relx=0.02,rely=0.4)
             self.secret.place(relx=0.02,rely=0.7)
-            register_btn.place(relx=0.78,rely=0.0)
+            self.register_btn.place(relx=0.78,rely=0.0)
     def __doRegister(self):
         msg = "The Following Device Info will be registered\n"
         msg += "Factory : "+ self.factory.getValue() +"\n"
@@ -450,7 +444,30 @@ class clientUserInfo(LabelFrame):
                 'user': self.device.getValue(),
                 'pass': self.secret.getValue()
             }
+            self.api.login(self.device.getValue(),self.secret.getValue())
             self.fileHandler.setUserInfo(self.userInfo)
-            self.__init__(self.parent,userInfo=self.userInfo)
+            self.__clearFrame()
+            _,self.userInfo=self.fileHandler.getUserInfo()
+            self.__makeFrame()
+            messagebox.showinfo("Register","Registeration for "+self.userInfo['user']+" completed !")
         else :
             print('Register canceled')
+    def __makeFrame(self):
+            self.configure(text="Device Info")
+            factory = Label(self,text="Factory : "+self.userInfo['factory'])
+            deviceID = Label(self,text="Device : "+self.userInfo['user'])
+            server_status = Label(self,text="YOLO-Server : Online")
+
+            factory.config(font=('tahoma',18))
+            deviceID.config(font=('tahoma',18))
+            server_status.config(font=('tahoma',18))
+
+            factory.place(relx=0.02,rely=0.01)
+            deviceID.place(relx=0.02,rely=0.25)
+            server_status.place(relx=0.02,rely=0.5)
+    def __clearFrame(self):
+            self.factory.place_forget()
+            self.device.place_forget()
+            self.secret.place_forget()
+            self.register_btn.place_forget()
+

@@ -379,7 +379,7 @@ def getModel(modelName):
 ####### get model in mongoDB ########################
 ####### store raw image (50 images) for newly trained model ##############
 @app.route('/api/send50raw',methods=['POST'])
-#@token_required
+@token_required
 def send50raw():
    if request.files and request.headers :
       image_data = request.files['image']
