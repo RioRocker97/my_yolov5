@@ -10,14 +10,14 @@ This project's goal is to integrated YOLO object detection into my basic GUI pyt
 Kasin Yamsri 
 Student NO.6010613518
 
-This is part of the final project of computer engineering at Thammsart University.
+This is part of the final project of computer engineering at Thammasart University.
 
 ## Result
 | old UI (pre v1.7) | new UI (v1.7+)
 | - | - |
-| <img src="https://i.imgur.com/NRknPKA.jpg" width="100%"> | <img src="https://i.imgur.com/8KFlaUQ.jpg" width="100%"> |
+| <img src="https://i.imgur.com/NRknPKA.jpg" width="100%"> | <img src="https://i.imgur.com/4XsuaND.jpg" width="100%"> |
 [View my Progression](progression.md)
 
 
 
-<img src="https://i.imgur.com/VkV3hD4.png" width="75%">
+<img src="https://i.imgur.com/VkV3hD4.png" width="100%">
