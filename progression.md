@@ -77,7 +77,8 @@
     - applicaiton structure feel like it too complexed.... but it work fine
 - 2/5/2021
     - from now on , update will be appear down below
-
+- 4/5/2021
+    - this project could have better optimization and better error handler... i'll do later AFTER getting a grade from this project first
 # OVERHAUL UI Progression (v1.7+)
 
 | Status | Feature | Status | Feature | 
@@ -91,6 +92,8 @@
 | :white_check_mark: | file handling | :white_check_mark: | test connection |
 | :white_check_mark: | get unknown result | :white_check_mark: | view mode |
 | :white_check_mark: | capture mode | :white_check_mark: | Friendly-UI |
+| :hourglass: | Warning and exception handler | :hourglass:  | better optimization |
+| :hourglass: | Cross-platform | :hourglass:  | executable program  |
 
 ## New File Location
 

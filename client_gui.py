@@ -354,8 +354,6 @@ class clientGUI(Tk):
             btn.configure(image=clientGUI.__allImages.get('isOff'))
         elif status == 'warn':
             btn.configure(image=clientGUI.__allImages.get('isWarn'))
-    def __default_screen(self):
-        pass
     
     def __detect_btn(self):
         global IS_VDO_CREATED,IS_VDO_STOP
@@ -365,11 +363,14 @@ class clientGUI(Tk):
         clientGUI.__allWidgets['model'].config(state='readonly')
         if IS_VDO_CREATED :
             if clientGUI.__allModes['detect']:
+                clientGUI.__allWidgets['view'].configure(state='disabled')
+                clientGUI.__allWidgets['cap'].configure(state='disabled')
                 task = threading.Thread(target=self.__detectProcess)
                 task.start()
             else :
                 IS_VDO_STOP = True
-                self.__default_screen()
+                clientGUI.__allWidgets['view'].configure(state='normal')
+                clientGUI.__allWidgets['cap'].configure(state='normal')
                 task = threading.Thread(target=self.__stopAndReloadliveYOLO)
                 task.start()
     def __view_btn(self):
