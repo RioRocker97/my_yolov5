@@ -55,6 +55,8 @@ def prepareYolo(model_path,loadFromImage=False,imageSource=''):
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
+
+    #print("OBJ in this model("+str(len(names))+"):" +str(names))
 def runYolo(found_obj_count):
     global dataset,model,colors,names,device,half,new_unk,onlyOne
 
