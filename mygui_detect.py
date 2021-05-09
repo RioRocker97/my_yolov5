@@ -57,6 +57,11 @@ def prepareYolo(model_path,loadFromImage=False,imageSource=''):
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     #print("OBJ in this model("+str(len(names))+"):" +str(names))
+    if weights.split('/')[2] == 'default.pt':
+        print("using default")
+        for i in range(1,len(names)):
+            names[i] = 'Unknown'
+        #print("new default",str(names))
 def runYolo(found_obj_count):
     global dataset,model,colors,names,device,half,new_unk,onlyOne
 

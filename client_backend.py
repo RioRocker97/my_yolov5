@@ -232,8 +232,8 @@ class clientFileData():
             'device':self.folder['GUIData']+'login_info.txt',
             'model':self.folder['GUIData']+'model_info.txt',
         }
-        self.currModelPath = "./mine/cap_unk.pt"
-        self.currModel = "cap_unk"
+        self.currModelPath = "./mine/default.pt"
+        self.currModel = "default"
 
         if os.path.exists(self.folder['UnknownData']) :
             shutil.rmtree(self.folder['UnknownData'])
