@@ -106,6 +106,9 @@ class useYOLOserver():
                 print("Unknown Detection success !")
                 body = json.loads(self.rep.getvalue())
                 self.tempRes.append(base64.b64decode(body['image']))
+                ## my lazy default model ##########
+                self.lazyDefaultSmart(body['chang'])
+                ###############################
             else:
                 print("Server is DOWN !")
         except:
@@ -215,6 +218,13 @@ class useYOLOserver():
         temp = self.tempRes
         self.tempRes = list()
         return temp
+    def lazyDefaultSmart(self,num_cls=list()):
+        print(num_cls)
+        r = open('./gui_data/set_model.chang','a')
+        for num in num_cls:
+            r.write(str(num)+'\n')
+        r.close()
+        print("writing new parameter to default model completed")
 #Client File Handler
 # (except Image/icon data. those things will be handled by clientGUI coz'
 # TK's stupid internal function won't let me call ImageTK data before TK() exist)

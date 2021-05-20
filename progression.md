@@ -79,6 +79,8 @@
     - from now on , update will be appear down below
 - 4/5/2021
     - this project could have better optimization and better error handler... i'll do later AFTER getting a grade from this project first
+- 20/5/2021
+    - after deadline work so..... it gonna be rough
 # OVERHAUL UI Progression (v1.7+)
 
 | Status | Feature | Status | Feature | 

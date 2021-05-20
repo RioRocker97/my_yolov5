@@ -57,11 +57,23 @@ def prepareYolo(model_path,loadFromImage=False,imageSource=''):
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
     #print("OBJ in this model("+str(len(names))+"):" +str(names))
-    if weights.split('/')[2] == '35obj.pt':
+    if weights.split('/')[2] == 'default.pt':
         print("using default model")
+        temp_class = list()
         for i in range(0,len(names)):
             if i >= 25 :
+                temp_class.append(names[i])
                 names[i] = 'Unknown'
+        
+        if os.path.exists('./gui_data/set_model.chang'):
+            print("manipulate default model")
+            r = open('./gui_data/set_model.chang')
+            info = r.readlines()
+            for obj in info:
+                x = int(obj.split("\n")[0])
+                print(x,temp_class[x-25])
+                names[x] = temp_class[x-25]
+            r.close()
         #print("new default",str(names))
 def runYolo(found_obj_count):
     global dataset,model,colors,names,device,half,new_unk,onlyOne
@@ -73,6 +85,10 @@ def runYolo(found_obj_count):
     last_count=0 # my count variable
     max_count=0 # my count variable
     ##########################
+    ## my lazy default model + MAI's implementation ##
+    cls_num = list()
+    label = 'Unknown'
+    ########################
     found_path=os.path.join(os.path.abspath(os.getcwd()),'unknown/')
 
 
@@ -142,6 +158,7 @@ def runYolo(found_obj_count):
                 plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
 
                 if onlyOne :
+                    cls_num.append(int(cls))
                     print("\nFound : %s at %.2f %.2f %.2f %.2f " % (names[int(cls)],line[1],line[2],line[3],line[4]))
 
         ### my count ###
@@ -153,7 +170,7 @@ def runYolo(found_obj_count):
 
         # Stream results
         if not onlyOne :
-            im0 = cv2.rectangle(im0,(0,0),(300,40),(0,0,0),cv2.FILLED)
+            im0 = cv2.rectangle(im0,(0,0),(350,40),(0,0,0),cv2.FILLED)
             im0 = cv2.putText(im0,'Found Object : '+str(int(found_obj_count)),(2,35),cv2.FONT_HERSHEY_SIMPLEX ,1,(0, 255, 0),1,cv2.LINE_AA)
             cv2.destroyWindow('YOLO')
 
@@ -165,6 +182,10 @@ def runYolo(found_obj_count):
         else:
             new_unk = False
 
+    if onlyOne:
+        return int(count),im0,label,cls_num
+    
+    print("now " + str(count))
     return int(count),im0
 
 

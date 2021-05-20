@@ -33,7 +33,7 @@ DB_URI = "mongodb+srv://ikanaporn:{}@cluster0.x8seg.mongodb.net/{}?retryWrites=t
     mongodb_password, database_name
 )
 FOLDER_IMAGE_UPLOADS = "/Users/mai/SeniorProject/flaskwebapi/env/assets/images"
-SINGLE_MODEL_TEST = "./mine/pen_only.pt"
+SINGLE_MODEL_TEST = "./mine/35obj.pt"
 app.config['SECRET_KEY']='Th1s1ss3cr3t'
 app.config["MONGODB_HOST"] = DB_URI
 app.config["IMAGE_UPLOADS"] = FOLDER_IMAGE_UPLOADS
@@ -243,7 +243,7 @@ def api_upload_unknown():
       
       t0 = time.time()
       prepareYolo(SINGLE_MODEL_TEST,True,save_path+"new/"+filename+".jpg")
-      _,res = runYolo(0)
+      _,res,label,num_cls = runYolo(0)
       image = cv2.cvtColor(res,cv2.COLOR_BGR2RGB)
       image2 = Image.fromarray(image).resize((480,360))
       print(image2)
@@ -258,7 +258,9 @@ def api_upload_unknown():
       
       return jsonify(
          result="Found Object",
-         image=img_str
+         image=img_str,
+         identify_and_conf = label,
+         chang = num_cls
       )
 ###### Unknown Detection ###############
 

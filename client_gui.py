@@ -178,11 +178,9 @@ class clientGUI(Tk):
             vdo_slot = self.__convertImageToTk(frame)
             clientGUI.__allWidgets['screen'].configure(image=vdo_slot)
 
-            if OBJ_COUNT['last'] <= temp_count:
+            if temp_count > OBJ_COUNT['last']:
                 OBJ_COUNT['current'] += (temp_count - OBJ_COUNT['last'])
-                OBJ_COUNT['last'] = temp_count
-            if temp_count == 0:
-                OBJ_COUNT['last'] = 0
+            OBJ_COUNT['last'] = temp_count
             clientGUI.__allWidgets['count'].configure(text="Today Count : "+str(self.objCount + OBJ_COUNT['current']))
         if IS_VDO_STOP:
             self.fileHandler.setCount(total_count=self.objCount + OBJ_COUNT['current'])
