@@ -158,7 +158,8 @@ def runYolo(found_obj_count):
                 plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=3)
 
                 if onlyOne :
-                    cls_num.append(int(cls))
+                    if int(cls) >=25 :
+                        cls_num.append(int(cls))
                     print("\nFound : %s at %.2f %.2f %.2f %.2f " % (names[int(cls)],line[1],line[2],line[3],line[4]))
 
         ### my count ###
