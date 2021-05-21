@@ -184,6 +184,7 @@ class clientGUI(Tk):
             clientGUI.__allWidgets['count'].configure(text="Today Count : "+str(self.objCount + OBJ_COUNT['current']))
         if IS_VDO_STOP:
             self.fileHandler.setCount(total_count=self.objCount + OBJ_COUNT['current'])
+            OBJ_COUNT['current'] = 0
             vdo_slot = clientGUI.__allImages['screen_img']
             clientGUI.__allWidgets['screen'].configure(image=vdo_slot)
     def __convertImageToTk(self,frame):

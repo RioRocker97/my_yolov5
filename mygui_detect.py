@@ -185,7 +185,7 @@ def runYolo(found_obj_count):
     if onlyOne:
         return int(count),im0,label,cls_num
     
-    print("now " + str(count))
+    #print("now " + str(count))
     return int(count),im0
 
 

@@ -251,8 +251,8 @@ def api_upload_unknown():
       timestamp = int(datetime.timestamp(datetime.now()))
       buff = BytesIO()
       image2.save(buff, format="JPEG")
-      unknown1 = Unknown(ids=num,filename=filename,times=timestamp,file=buff)
-      unknown1.save()
+      #unknown1 = Unknown(ids=num,filename=filename,times=timestamp,file=buff)
+      #unknown1.save()
 
       img_str = base64.b64encode(buff.getvalue()).decode('utf-8')
       

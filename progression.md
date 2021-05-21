@@ -81,6 +81,8 @@
     - this project could have better optimization and better error handler... i'll do later AFTER getting a grade from this project first
 - 20/5/2021
     - after deadline work so..... it gonna be rough
+    - "Smart-swap" feature is implemented
+    - hey, if it work , it ain't wrong
 # OVERHAUL UI Progression (v1.7+)
 
 | Status | Feature | Status | Feature | 
