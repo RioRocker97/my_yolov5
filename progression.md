@@ -83,6 +83,9 @@
     - after deadline work so..... it gonna be rough
     - "Smart-swap" feature is implemented
     - hey, if it work , it ain't wrong
+- 26/5/2021
+    - last edit before presentation
+    - good luck .
 # OVERHAUL UI Progression (v1.7+)
 
 | Status | Feature | Status | Feature | 

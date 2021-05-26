@@ -183,6 +183,7 @@ class clientGUI(Tk):
             OBJ_COUNT['last'] = temp_count
             clientGUI.__allWidgets['count'].configure(text="Today Count : "+str(self.objCount + OBJ_COUNT['current']))
         if IS_VDO_STOP:
+            self.objCount+= OBJ_COUNT['current']
             self.fileHandler.setCount(total_count=self.objCount + OBJ_COUNT['current'])
             OBJ_COUNT['current'] = 0
             vdo_slot = clientGUI.__allImages['screen_img']

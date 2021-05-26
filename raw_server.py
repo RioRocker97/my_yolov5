@@ -400,6 +400,38 @@ def send50raw():
 
 ####### store raw image (50 images) for newly trained model ##############
 
+######### add 9 and 10 coz' why not ? #############
+#9.Added model
+@app.route('/api/info/addModel', methods=['POST'])
+@token_required
+def addModel():
+   data = request.get_json()
+
+   newModel = Model(name=data['name'],pathfile=data['pathfile'])
+   newModel.save()
+
+   return "Successfully model added!"
+
+#10.1Counting
+@app.route('/api/info/addTotal', methods=['POST'])
+@token_required
+def addTotal():
+   data = request.get_json()
+   newTotal = Total(ids=data['ids'],daily=data['daily'],total=data['total'])
+   newTotal.save()
+
+   return "Successfully model added!"
+    
+#10.2Counting
+@app.route('/api/info/total', methods=['GET'])
+@token_required
+def getTotal():
+   output = []
+   for total in Total.objects[:]:
+      output.append(total)
+   return jsonify({'result':output})
+
+###############################
 ##### TESTING function ######################
 @app.route('/api/testfx/<factory>',methods=['GET'])
 def fuckoff(factory):
