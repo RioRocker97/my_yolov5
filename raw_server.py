@@ -402,15 +402,18 @@ def send50raw():
 
 ######### add 9 and 10 coz' why not ? #############
 #9.Added model
-@app.route('/api/info/addModel', methods=['POST'])
+@app.route('/api/info/addModel',methods=['post'])
 @token_required
-def addModel():
-   data = request.get_json()
+def add_model():
 
-   newModel = Model(name=data['name'],pathfile=data['pathfile'])
-   newModel.save()
+   pt_path = os.getcwd()+"/api_unknown/model"
 
-   return "Successfully model added!"
+   if request.files:
+      file = request.files["file"]
+      file.save(pt_path+file)
+      return "Your model have been saved."
+   else :
+      return "Please send model file(.pt) again."
 
 #10.1Counting
 @app.route('/api/info/addTotal', methods=['POST'])
@@ -431,6 +434,11 @@ def getTotal():
       output.append(total)
    return jsonify({'result':output})
 
+@app.route('/api/info/getClient/<uniqueName>', methods=['GET'])
+@token_required
+def getClient(uniqueName):
+   client = Device.objects.get(uniqueName=uniqueName)
+   return jsonify({'result':client})
 ###############################
 ##### TESTING function ######################
 @app.route('/api/testfx/<factory>',methods=['GET'])
